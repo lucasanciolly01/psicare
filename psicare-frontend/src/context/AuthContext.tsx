@@ -1,4 +1,5 @@
 import { createContext, useContext, useState, useEffect, type ReactNode } from 'react';
+import { useNavigate } from 'react-router-dom'; // 1. Importação necessária
 
 interface Usuario {
   nome: string;
@@ -19,6 +20,8 @@ interface AuthContextData {
 const AuthContext = createContext<AuthContextData>({} as AuthContextData);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
+  const navigate = useNavigate(); // 2. Inicialização do hook de navegação
+
   const [usuario, setUsuario] = useState<Usuario | null>(() => {
     const saved = localStorage.getItem('psicare_auth_v2');
     // Usuário padrão para testes
@@ -49,7 +52,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const logout = () => {
     setUsuario(null);
-    window.location.href = '/login';
+    localStorage.removeItem('psicare_auth_v2'); // Garante a limpeza imediata
+    navigate('/login'); // 3. Navegação via SPA (sem reload)
   };
 
   const atualizarPerfil = (dados: Partial<Usuario>) => {
