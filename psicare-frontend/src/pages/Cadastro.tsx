@@ -1,3 +1,4 @@
+// src/pages/Cadastro.tsx
 import { useAuth } from '../context/AuthContext';
 import { Link, useNavigate } from 'react-router-dom';
 import { Lock, Mail, User } from 'lucide-react';
@@ -5,13 +6,12 @@ import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
 
-// Schema de validação
+// Schema de validação (Mantido igual)
 const cadastroSchema = z.object({
   nome: z.string().min(3, 'O nome deve ter pelo menos 3 caracteres'),
   email: z.string().email('Formato de e-mail inválido'),
   senha: z.string().min(6, 'A senha deve ter no mínimo 6 caracteres'),
   confirmacao: z.string(),
-  // Validação corrigida para boolean
   termos: z.boolean().refine((val) => val === true, {
     message: 'Você deve aceitar os termos de uso',
   }),
@@ -37,19 +37,21 @@ export function Cadastro() {
       email: '',
       senha: '',
       confirmacao: '',
-      termos: false, // Inicia desmarcado
+      termos: false,
     }
   });
 
   const handleCadastro = (data: CadastroSchema) => {
-    // Simula cadastro e login
     console.log('Dados enviados:', data);
     login(data.email);
     navigate('/');
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 p-4">
+    // MUDANÇA 1: min-h-[100dvh] para altura real no mobile
+    // MUDANÇA 2: pb-24 para criar o espaço de segurança no rodapé (contra a barra do Safari)
+    // MUDANÇA 3: overflow-y-auto para garantir rolagem em telas pequenas
+    <div className="min-h-[100dvh] flex items-center justify-center bg-gray-50 p-4 overflow-y-auto pb-24">
       <div className="bg-white p-8 rounded-2xl shadow-xl w-full max-w-md border border-gray-100">
         <div className="text-center mb-6">
           <h1 className="text-2xl font-bold text-gray-800">Crie sua conta</h1>

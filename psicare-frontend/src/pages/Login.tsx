@@ -1,3 +1,4 @@
+// src/pages/Login.tsx
 import { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { Link, useNavigate } from 'react-router-dom';
@@ -18,10 +19,17 @@ export function Login() {
   };
 
   return (
-    <div className="min-h-screen w-full flex">
+    // MUDANÇA 1: Usar min-h-[100dvh] para respeitar a altura real do mobile
+    <div className="min-h-[100dvh] w-full flex">
+      
       {/* Lado Esquerdo - Formulário */}
-      <div className="w-full lg:w-1/2 flex items-center justify-center p-8 bg-white">
-        <div className="max-w-md w-full">
+      {/* MUDANÇA 2: overflow-y-auto para garantir rolagem em telas muito pequenas */}
+      <div className="w-full lg:w-1/2 flex items-center justify-center p-8 bg-white overflow-y-auto">
+        
+        {/* MUDANÇA 3: Adicionado 'pb-24 lg:pb-0'. 
+            Isso cria um colchão de segurança no rodapé em mobile, 
+            empurrando o texto para cima da barra do Safari/Chrome. */}
+        <div className="max-w-md w-full pb-24 lg:pb-0">
           <div className="mb-8">
             <h1 className="text-3xl font-bold text-primary mb-2">💚 PsiCare</h1>
             <h2 className="text-2xl font-bold text-gray-800">Bem-vindo de volta!</h2>
@@ -73,10 +81,9 @@ export function Login() {
         </div>
       </div>
 
-      {/* Lado Direito - Imagem/Banner */}
+      {/* Lado Direito - Imagem/Banner (Mantido igual) */}
       <div className="hidden lg:flex w-1/2 bg-gradient-to-br from-green-50 to-green-100 items-center justify-center relative overflow-hidden">
         <div className="absolute inset-0 bg-primary/10 backdrop-blur-sm z-10"></div>
-        {/* Aqui você colocaria a URL da sua imagem original 'img/imagem-banner.jpg' */}
         <img 
           src="https://images.unsplash.com/photo-1576091160399-112ba8d25d1d?ixlib=rb-1.2.1&auto=format&fit=crop&w=1950&q=80" 
           alt="Consultório" 
