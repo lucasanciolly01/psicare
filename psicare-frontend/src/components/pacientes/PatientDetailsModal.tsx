@@ -1,14 +1,35 @@
 import { Modal } from '../ui/Modal';
-import { usePacientes, type Paciente, type Sessao } from '../../context/PacientesContext'; 
-// Ícones atualizados: Adicionei CheckCircle e XCircle
-import { Phone, Mail, Activity, Clock, Plus, FileText, Lock, Calendar as CalendarIcon, CheckCircle, XCircle } from 'lucide-react'; 
-import { useState } from 'react';
+import { usePacientes, type Paciente, type Sessao } from '../../context/PacientesContext';
+import { 
+  Phone, Mail, Activity, Clock, Plus, FileText, Lock, 
+  Calendar as CalendarIcon, CheckCircle, XCircle, HeartPulse, ArrowRight
+} from 'lucide-react';
+import { useState, type ElementType } from 'react';
+import { format, parseISO } from 'date-fns';
+import { ptBR } from 'date-fns/locale';
 
 interface PatientDetailsProps {
   isOpen: boolean;
   onClose: () => void;
   paciente: Paciente | null;
 }
+
+// --- HELPER 1: Componente Visual de Informação (MOVIDO PARA FORA) ---
+const InfoSection = ({ icon: Icon, title, content, isPrivate = false }: { icon: ElementType, title: string, content?: string, isPrivate?: boolean }) => (
+  <div className={`p-4 rounded-xl border ${isPrivate ? 'bg-amber-50 border-amber-100' : 'bg-gray-50 border-gray-100'}`}>
+    <div className="flex items-center gap-2 mb-2">
+      <div className={`p-1 rounded-md ${isPrivate ? 'bg-amber-100 text-amber-600' : 'bg-white text-primary shadow-sm'}`}>
+        <Icon size={14} />
+      </div>
+      <h4 className={`text-xs font-bold uppercase tracking-wide ${isPrivate ? 'text-amber-800' : 'text-gray-400'}`}>
+        {title}
+      </h4>
+    </div>
+    <div className={`text-sm leading-relaxed ${isPrivate ? 'text-amber-900' : 'text-gray-700'}`}>
+      {content ? <p className="whitespace-pre-wrap">{content}</p> : <span className="text-gray-400 italic text-xs">Não registrado.</span>}
+    </div>
+  </div>
+);
 
 export function PatientDetailsModal({ isOpen, onClose, paciente }: PatientDetailsProps) {
   
@@ -24,20 +45,20 @@ export function PatientDetailsModal({ isOpen, onClose, paciente }: PatientDetail
 
   if (!paciente) return null;
 
-  // FUNÇÃO DE ESTILOS UNIFICADA (Para lista e para formulário)
+  const dataNascimentoFormatada = paciente.dataNascimento 
+    ? format(parseISO(paciente.dataNascimento), 'dd/MM/yyyy', { locale: ptBR })
+    : 'N/A';
+
+  // --- HELPER 2: Estilos de Status ---
   const getStatusClasses = (status: Sessao['statusSessao'], isSelected: boolean = false) => {
-    
-    // Estilos para o estado ATIVO (Fundo forte, escala, sombra)
     if (isSelected) {
       switch (status) {
-        case 'compareceu': return 'bg-green-600 border-green-700 text-white shadow-md transform scale-[1.02]';
-        case 'faltou': return 'bg-red-600 border-red-700 text-white shadow-md transform scale-[1.02]';
-        case 'remarcada': return 'bg-blue-600 border-blue-700 text-white shadow-md transform scale-[1.02]';
-        case 'cancelada': return 'bg-gray-600 border-gray-700 text-white shadow-md transform scale-[1.02]';
+        case 'compareceu': return 'bg-green-600 border-green-700 text-white shadow-md ring-2 ring-green-200';
+        case 'faltou': return 'bg-red-600 border-red-700 text-white shadow-md ring-2 ring-red-200';
+        case 'remarcada': return 'bg-blue-600 border-blue-700 text-white shadow-md ring-2 ring-blue-200';
+        case 'cancelada': return 'bg-gray-600 border-gray-700 text-white shadow-md ring-2 ring-gray-200';
       }
     }
-    
-    // Estilos para o estado INATIVO/LISTA (Fundo claro, texto forte)
     switch (status) {
       case 'compareceu': return 'bg-green-100 text-green-700 border-green-200';
       case 'faltou': return 'bg-red-100 text-red-700 border-red-200';
@@ -46,7 +67,6 @@ export function PatientDetailsModal({ isOpen, onClose, paciente }: PatientDetail
       default: return 'bg-gray-100 text-gray-700 border-gray-200';
     }
   };
-
 
   const handleAdicionarSessao = (e: React.FormEvent) => {
     e.preventDefault();
@@ -65,224 +85,187 @@ export function PatientDetailsModal({ isOpen, onClose, paciente }: PatientDetail
 
   return (
     <>
-      {/* 1. MODAL PRINCIPAL DE VISUALIZAÇÃO */}
       <Modal 
         isOpen={isOpen} 
         onClose={onClose} 
-        title="Prontuário do Paciente"
-        size="lg"
+        title="Prontuário Digital"
+        size="xl"
       >
-        <div className="flex flex-col gap-6">
-          
-          {/* Cabeçalho */}
-          <div className="bg-gradient-to-r from-green-50 to-white p-6 rounded-xl border border-green-100 flex flex-col sm:flex-row items-center gap-5 text-center sm:text-left">
-            <div className="w-20 h-20 rounded-full bg-primary text-white flex items-center justify-center text-3xl font-bold shadow-md shrink-0">
-              {paciente.nome.substring(0, 2).toUpperCase()}
-            </div>
-            
-            <div className="flex-1">
-              <h2 className="text-2xl font-bold text-gray-800">{paciente.nome}</h2>
-              
-              <div className="flex flex-wrap justify-center sm:justify-start gap-3 mt-3 text-sm text-gray-600">
-                <span className="flex items-center gap-1.5 px-3 py-1 bg-white rounded-full border border-gray-100 shadow-sm">
-                  <Phone size={14} className="text-primary" /> {paciente.telefone}
-                </span>
-                
-                {paciente.email && (
-                  <span className="flex items-center gap-1.5 px-3 py-1 bg-white rounded-full border border-gray-100 shadow-sm">
-                    <Mail size={14} className="text-primary" /> {paciente.email}
-                  </span>
-                )}
-                
-                {paciente.dataNascimento && (
-                  <span className="flex items-center gap-1.5 px-3 py-1 bg-white rounded-full border border-gray-100 shadow-sm">
-                    <CalendarIcon size={14} className="text-primary" /> 
-                    {new Date(paciente.dataNascimento + 'T12:00:00').toLocaleDateString('pt-BR')}
-                  </span>
-                )}
-              </div>
+        <div className="space-y-6">
+          {/* HEADER PREMIUM */}
+          <div className="relative overflow-hidden bg-gradient-to-br from-green-50 to-white p-6 rounded-2xl border border-green-100">
+             <div className="relative z-10 flex flex-col md:flex-row gap-6 items-center md:items-start">
+                <div className="w-20 h-20 rounded-full bg-white text-primary flex items-center justify-center text-3xl font-bold border-4 border-white shadow-md">
+                  {paciente.nome.substring(0, 2).toUpperCase()}
+                </div>
 
-              <div className="mt-4 flex justify-center sm:justify-start">
-                <span className={`px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wide border
-                    ${paciente.status === 'ativo' ? 'bg-green-100 text-green-700 border-green-200' : 'bg-gray-100 text-gray-600 border-gray-200'}
-                `}>
-                  {paciente.status}
-                </span>
-              </div>
-            </div>
+                <div className="flex-1 text-center md:text-left space-y-2">
+                  <div className="flex flex-col md:flex-row items-center gap-3 justify-center md:justify-start">
+                    <h2 className="text-2xl font-bold text-gray-800">{paciente.nome}</h2>
+                    <span className={`px-3 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider border ${
+                      paciente.status === 'ativo' ? 'bg-green-100 text-green-700 border-green-200' : 'bg-gray-100 text-gray-600 border-gray-200'
+                    }`}>
+                      {paciente.status}
+                    </span>
+                  </div>
+
+                  <div className="flex flex-wrap justify-center md:justify-start gap-2 text-sm text-gray-600 mt-1">
+                    <span className="flex items-center gap-1.5 bg-white/80 px-3 py-1 rounded-lg border border-green-50">
+                      <Phone size={14} className="text-primary" /> {paciente.telefone}
+                    </span>
+                    {paciente.email && (
+                      <span className="flex items-center gap-1.5 bg-white/80 px-3 py-1 rounded-lg border border-green-50">
+                        <Mail size={14} className="text-primary" /> {paciente.email}
+                      </span>
+                    )}
+                    <span className="flex items-center gap-1.5 bg-white/80 px-3 py-1 rounded-lg border border-green-50">
+                      <CalendarIcon size={14} className="text-primary" /> {dataNascimentoFormatada}
+                    </span>
+                  </div>
+                </div>
+             </div>
+             <div className="absolute top-0 right-0 -mt-4 -mr-4 w-32 h-32 bg-green-100/50 rounded-full blur-3xl"></div>
           </div>
 
-          {/* Grid de Conteúdo */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            
-            {/* Coluna Esquerda: Dados Clínicos */}
-            <div className="space-y-4">
-              <h3 className="text-xs font-bold text-gray-400 uppercase tracking-wider flex items-center gap-2 border-b border-gray-100 pb-2">
-                <Activity size={14} /> Dados Clínicos
-              </h3>
+          <div className="grid grid-cols-1 md:grid-cols-12 gap-6">
+            <div className="md:col-span-5 space-y-4">
+              <div className="flex items-center gap-2 pb-2 border-b border-gray-100">
+                <Activity size={16} className="text-gray-400" />
+                <h3 className="text-xs font-bold text-gray-400 uppercase tracking-wider">Dados Clínicos</h3>
+              </div>
               
-              {/* Queixa Principal */}
-              <div className="bg-gray-50 p-4 rounded-xl border border-gray-100">
-                <label className="text-xs font-bold text-primary mb-2 block uppercase">Queixa Principal</label>
-                <p className="text-sm text-gray-700 leading-relaxed whitespace-pre-wrap">
-                  {paciente.queixaPrincipal || "Nenhuma queixa registrada."}
-                </p>
-              </div>
-
-              {/* Histórico Familiar */}
-              <div className="bg-gray-50 p-4 rounded-xl border border-gray-100">
-                <label className="text-xs font-bold text-primary mb-2 block uppercase">Histórico Familiar</label>
-                <p className="text-sm text-gray-700 leading-relaxed whitespace-pre-wrap">
-                  {paciente.historicoFamiliar || "Informação não fornecida."}
-                </p>
-              </div>
-
-              {/* Observações Iniciais */}
-              {paciente.observacoesIniciais && (
-                <div className="bg-gray-50 p-4 rounded-xl border border-gray-100">
-                  <label className="text-xs font-bold text-primary mb-2 block uppercase items-center gap-2">
-                    <FileText size={12} /> Observações Iniciais
-                  </label>
-                  <p className="text-sm text-gray-700 leading-relaxed whitespace-pre-wrap">
-                    {paciente.observacoesIniciais}
-                  </p>
-                </div>
-              )}
-
-              {/* Anotações Privadas */}
-              {paciente.anotacoes && (
-                <div className="bg-yellow-50 p-4 rounded-xl border border-yellow-100">
-                  <label className="text-xs font-bold text-yellow-700 mb-2 block uppercase items-center gap-2">
-                    <Lock size={12} /> Anotações Privadas
-                  </label>
-                  <p className="text-sm text-gray-700 leading-relaxed whitespace-pre-wrap">
-                    {paciente.anotacoes}
-                  </p>
-                </div>
-              )}
+              <InfoSection icon={Activity} title="Queixa Principal" content={paciente.queixaPrincipal} />
+              <InfoSection icon={HeartPulse} title="Histórico Familiar" content={paciente.historicoFamiliar} />
+              <InfoSection icon={FileText} title="Observações Iniciais" content={paciente.observacoesIniciais} />
+              <InfoSection icon={Lock} title="Anotações Privadas" content={paciente.anotacoes} isPrivate={true} />
             </div>
 
-            {/* Coluna Direita: Histórico DINÂMICO */}
-            <div className="space-y-4">
-              <h3 className="text-xs font-bold text-gray-400 uppercase tracking-wider flex items-center gap-2 border-b border-gray-100 pb-2">
-                <Clock size={14} /> Histórico de Sessões ({paciente.sessoes.length})
-              </h3>
-              
-              <div className="border border-gray-100 rounded-xl overflow-hidden bg-white max-h-96 overflow-y-auto">
-                
-                {paciente.sessoes.length > 0 ? (
-                  paciente.sessoes.map((sessao) => (
-                    <div key={sessao.id} className="p-4 border-b border-gray-50 last:border-0 hover:bg-gray-50 transition-colors cursor-pointer group">
-                      <div className="flex justify-between items-start mb-1">
-                        <p className="text-sm font-bold text-gray-800">{sessao.tipo}</p>
-                        <span className={`text-[10px] ${getStatusClasses(sessao.statusSessao)} px-2 py-0.5 rounded font-bold uppercase`}>
+            <div className="md:col-span-7 flex flex-col h-full">
+               <div className="flex items-center justify-between gap-2 pb-2 border-b border-gray-100 mb-4">
+                <div className="flex items-center gap-2">
+                  <Clock size={16} className="text-gray-400" />
+                  <h3 className="text-xs font-bold text-gray-400 uppercase tracking-wider">
+                    Histórico ({paciente.sessoes?.length || 0})
+                  </h3>
+                </div>
+                <button 
+                  onClick={() => setIsNewSessaoModalOpen(true)}
+                  className="text-xs font-bold text-primary hover:text-green-700 flex items-center gap-1 transition-colors bg-green-50 px-3 py-1.5 rounded-lg"
+                >
+                  <Plus size={14} /> Nova Evolução
+                </button>
+              </div>
+
+              <div className="flex-1 overflow-y-auto max-h-[500px] pr-2 space-y-3 custom-scrollbar">
+                {paciente.sessoes && paciente.sessoes.length > 0 ? (
+                  [...paciente.sessoes].reverse().map((sessao) => (
+                    <div key={sessao.id} className="group relative bg-white border border-gray-100 rounded-xl p-4 hover:shadow-md transition-all hover:border-primary/30">
+                      <div className="flex justify-between items-start mb-2">
+                        <div>
+                           <p className="text-sm font-bold text-gray-800">{sessao.tipo}</p>
+                           <p className="text-xs text-gray-400 flex items-center gap-1 mt-0.5">
+                             <CalendarIcon size={10} /> 
+                             {format(parseISO(sessao.data), "dd 'de' MMM, yyyy", { locale: ptBR })}
+                           </p>
+                        </div>
+                        <span className={`text-[10px] px-2 py-1 rounded-md font-bold uppercase border ${getStatusClasses(sessao.statusSessao)}`}>
                           {sessao.statusSessao}
                         </span>
                       </div>
-                      <p className="text-xs text-gray-500 flex items-center gap-1 mb-2">
-                        <CalendarIcon size={12} /> {new Date(sessao.data + 'T12:00:00').toLocaleDateString('pt-BR')}
-                      </p>
-                      <p className="text-xs text-gray-600 italic line-clamp-2">
-                        {sessao.evolucao.substring(0, 100)}{sessao.evolucao.length > 100 ? '...' : ''}
-                      </p>
+                      <div className="bg-gray-50 rounded-lg p-3 text-sm text-gray-600 leading-relaxed border border-gray-50 group-hover:bg-white group-hover:border-gray-100 transition-colors">
+                        {sessao.evolucao}
+                      </div>
                     </div>
                   ))
                 ) : (
-                  <div className="p-4 text-center text-sm text-gray-500">
-                    Nenhuma sessão registrada.
+                  <div className="flex flex-col items-center justify-center py-12 text-center border-2 border-dashed border-gray-100 rounded-xl bg-gray-50/50">
+                    <FileText size={32} className="text-gray-300 mb-2" />
+                    <p className="text-sm text-gray-500 font-medium">Nenhuma evolução registrada.</p>
+                    <p className="text-xs text-gray-400 mt-1">Clique em "Nova Evolução" para começar.</p>
                   </div>
                 )}
               </div>
-              
-              <button 
-                onClick={() => setIsNewSessaoModalOpen(true)}
-                className="w-full py-2.5 text-sm text-primary font-medium border border-dashed border-primary/30 rounded-lg hover:bg-green-50 transition-colors flex items-center justify-center gap-2"
-              >
-                <Plus size={16} /> Adicionar Nova Evolução
-              </button>
             </div>
           </div>
         </div>
       </Modal>
 
-      {/* --- 2. NOVO MODAL: ADICIONAR EVOLUÇÃO/SESSÃO (CORRIGIDO ABAIXO) --- */}
       <Modal
         isOpen={isNewSessaoModalOpen}
         onClose={() => setIsNewSessaoModalOpen(false)}
-        title={`Nova Sessão para ${paciente.nome}`}
+        title={`Nova Evolução: ${paciente.nome}`}
         size="md"
       >
-        <form onSubmit={handleAdicionarSessao} className="space-y-5">
-          <div className="grid grid-cols-2 gap-4">
-              
-              {/* Tipo */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Tipo de Sessão</label>
-                <select required className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none bg-white transition-all"
-                  value={novaSessao.tipo}
-                  onChange={e => setNovaSessao({...novaSessao, tipo: e.target.value})}
-                >
-                    <option>Sessão de Acompanhamento</option>
-                    <option>Anamnese Inicial</option>
-                    <option>Retorno/Reavaliação</option>
-                </select>
+        <form onSubmit={handleAdicionarSessao} className="space-y-6">
+          <div className="grid grid-cols-2 gap-5">
+              <div className="col-span-2 md:col-span-1">
+                <label className="block text-sm font-bold text-gray-700 mb-1.5">Tipo de Sessão</label>
+                <div className="relative">
+                  <select required className="w-full px-4 py-2.5 border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none bg-white transition-all appearance-none"
+                    value={novaSessao.tipo}
+                    onChange={e => setNovaSessao({...novaSessao, tipo: e.target.value})}
+                  >
+                      <option>Sessão de Acompanhamento</option>
+                      <option>Anamnese Inicial</option>
+                      <option>Retorno/Reavaliação</option>
+                      <option>Entrevista Familiar</option>
+                  </select>
+                  <ArrowRight size={14} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 rotate-90" />
+                </div>
               </div>
               
-              {/* Data */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Data</label>
-                <input required type="date" className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all text-gray-600 appearance-none bg-white"
-                  value={novaSessao.data}
-                  max={new Date().toISOString().split("T")[0]}
-                  onChange={e => setNovaSessao({...novaSessao, data: e.target.value})}
-                />
+              <div className="col-span-2 md:col-span-1">
+                <label className="block text-sm font-bold text-gray-700 mb-1.5">Data</label>
+                <div className="relative">
+                  <input required type="date" className="w-full px-4 py-2.5 border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all text-gray-600 bg-white"
+                    value={novaSessao.data}
+                    max={new Date().toISOString().split("T")[0]}
+                    onChange={e => setNovaSessao({...novaSessao, data: e.target.value})}
+                  />
+                  <CalendarIcon size={16} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
+                </div>
               </div>
 
-              {/* Status - CORREÇÃO DE ESTILO APLICADA AQUI */}
               <div className="col-span-2">
-                <label className="block text-sm font-medium text-gray-700 mb-1">Status</label>
-                <div className="flex flex-wrap gap-3">
+                <label className="block text-sm font-bold text-gray-700 mb-2">Status da Sessão</label>
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
                     {['compareceu', 'faltou', 'remarcada', 'cancelada'].map(status => {
                       const isSelected = novaSessao.statusSessao === status;
-                      
-                      // Usamos o getStatusClasses para aplicar a estilização unificada
                       return (
                         <button type="button" key={status} 
                           onClick={() => setNovaSessao({...novaSessao, statusSessao: status as Sessao['statusSessao']})}
                           className={`
-                            flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-xl transition-all border shadow-sm duration-150
-                            ${isSelected 
-                              ? getStatusClasses(status as Sessao['statusSessao'], true) 
-                              : 'bg-white text-gray-700 hover:bg-gray-50 border-gray-300' // Estilo INATIVO
-                            }
+                            flex flex-col items-center justify-center gap-1 py-3 px-2 rounded-xl transition-all duration-200 border
+                            ${isSelected ? getStatusClasses(status as Sessao['statusSessao'], true) : 'bg-white border-gray-200 text-gray-500 hover:bg-gray-50 hover:border-gray-300'}
                           `}
                         >
-                           {/* Ícones condicionais para dar o toque profissional */}
-                           {status === 'compareceu' && <CheckCircle size={16} />}
-                           {(status === 'faltou' || status === 'cancelada') && <XCircle size={16} />}
-                           {status.charAt(0).toUpperCase() + status.slice(1)}
+                           {status === 'compareceu' && <CheckCircle size={18} />}
+                           {(status === 'faltou' || status === 'cancelada') && <XCircle size={18} />}
+                           {status === 'remarcada' && <Clock size={18} />}
+                           <span className="text-xs font-bold capitalize">{status}</span>
                         </button>
                       );
                     })}
                 </div>
               </div>
               
+              <div className="col-span-2">
+                <label className="text-sm font-bold text-gray-700 mb-1.5 flex justify-between">
+                  <span>Evolução / Anotações</span>
+                  <span className="text-xs font-normal text-gray-400">Descreva os detalhes da sessão</span>
+                </label>
+                <textarea required className="w-full p-4 border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none h-40 resize-none text-sm leading-relaxed transition-all shadow-sm"
+                  placeholder="Registre aqui o que foi discutido, intervenções realizadas, humor do paciente e planejamento para a próxima sessão..."
+                  value={novaSessao.evolucao}
+                  onChange={e => setNovaSessao({...novaSessao, evolucao: e.target.value})}
+                ></textarea>
+              </div>
           </div>
 
-          {/* Evolução */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Evolução / Anotações da Sessão</label>
-            <textarea required className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none h-32 resize-none text-sm transition-all"
-              placeholder="Registre aqui o que foi discutido, intervenções, e o planejamento para a próxima sessão..."
-              value={novaSessao.evolucao}
-              onChange={e => setNovaSessao({...novaSessao, evolucao: e.target.value})}
-            ></textarea>
-          </div>
-
-          <div className="pt-4 flex gap-3 border-t border-gray-50">
-            <button type="button" onClick={() => setIsNewSessaoModalOpen(false)} className="flex-1 py-2.5 border border-gray-300 text-gray-700 rounded-lg font-medium hover:bg-gray-50 transition-colors">Cancelar</button>
-            <button type="submit" className="flex-1 py-2.5 bg-primary text-white rounded-lg font-medium hover:bg-green-700 shadow-md transition-all">
-              Salvar Evolução
+          <div className="pt-2 flex gap-3">
+            <button type="button" onClick={() => setIsNewSessaoModalOpen(false)} className="flex-1 py-3 border border-gray-300 text-gray-700 rounded-xl font-bold hover:bg-gray-50 transition-colors">Cancelar</button>
+            <button type="submit" className="flex-1 py-3 bg-primary text-white rounded-xl font-bold hover:bg-green-700 shadow-lg shadow-green-200 transition-all hover:-translate-y-0.5 flex items-center justify-center gap-2">
+              <Plus size={18} /> Salvar Evolução
             </button>
           </div>
         </form>

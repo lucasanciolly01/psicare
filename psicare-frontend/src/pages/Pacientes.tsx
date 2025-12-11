@@ -1,39 +1,56 @@
-import { useState, useEffect } from 'react';
-import { Search, Plus, Trash2, User, Phone, Mail, AlertTriangle, Edit, FileText, Eye, Calendar as CalendarIcon } from 'lucide-react';
-import { Modal } from '../components/ui/Modal';
-import { usePacientes, type Paciente } from '../context/PacientesContext';
-import { PatientDetailsModal } from '../components/pacientes/PatientDetailsModal';
+import { useState, useEffect } from "react";
+import {
+  Search,
+  Plus,
+  Trash2,
+  User,
+  Phone,
+  Mail,
+  AlertTriangle,
+  Edit,
+  FileText,
+  Eye,
+  Calendar as CalendarIcon,
+} from "lucide-react";
+import { Modal } from "../components/ui/Modal";
+import { usePacientes, type Paciente } from "../context/PacientesContext";
+import { PatientDetailsModal } from "../components/pacientes/PatientDetailsModal";
 
 export function Pacientes() {
-  const { pacientes, adicionarPaciente, removerPaciente, atualizarPaciente } = usePacientes();
-  
-  const [termoBusca, setTermoBusca] = useState('');
-  const [filtroStatus, setFiltroStatus] = useState('todos');
+  const { pacientes, adicionarPaciente, removerPaciente, atualizarPaciente } =
+    usePacientes();
+
+  const [termoBusca, setTermoBusca] = useState("");
+  const [filtroStatus, setFiltroStatus] = useState("todos");
   const [isCadastroOpen, setIsCadastroOpen] = useState(false);
-  
-  const [pacienteParaDeletar, setPacienteParaDeletar] = useState<string | null>(null);
+
+  const [pacienteParaDeletar, setPacienteParaDeletar] = useState<string | null>(
+    null
+  );
   const [pacienteEmEdicao, setPacienteEmEdicao] = useState<string | null>(null);
-  const [pacienteVisualizar, setPacienteVisualizar] = useState<Paciente | null>(null);
+  const [pacienteVisualizar, setPacienteVisualizar] = useState<Paciente | null>(
+    null
+  );
 
   // 1. Estado Completo
   const [novoPaciente, setNovoPaciente] = useState({
-    nome: '',
-    email: '',
-    telefone: '',
-    dataNascimento: '',
-    status: 'ativo' as 'ativo' | 'inativo' | 'pausa',
-    queixaPrincipal: '',
-    historicoFamiliar: '',
-    observacoesIniciais: '',
-    anotacoes: ''
+    nome: "",
+    email: "",
+    telefone: "",
+    dataNascimento: "",
+    status: "ativo" as Paciente["status"], // Tipagem correta
+    queixaPrincipal: "",
+    historicoFamiliar: "",
+    observacoesIniciais: "",
+    anotacoes: "",
   });
 
   // --- Lógica de Máscara de Telefone ---
   const mascaraTelefone = (valor: string) => {
     return valor
-      .replace(/\D/g, '') // Remove tudo o que não é dígito
-      .replace(/^(\d{2})(\d)/g, '($1) $2') // Coloca parênteses em volta dos dois primeiros dígitos
-      .replace(/(\d)(\d{4})$/, '$1-$2'); // Coloca hífen entre o quarto e o quinto dígitos
+      .replace(/\D/g, "")
+      .replace(/^(\d{2})(\d)/g, "($1) $2")
+      .replace(/(\d)(\d{4})$/, "$1-$2");
   };
 
   const handleTelefoneChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -41,32 +58,37 @@ export function Pacientes() {
     setNovoPaciente({ ...novoPaciente, telefone: valorMascarado });
   };
 
-  // 2. Carregar dados para edição
+  // 2. Carregar dados para edição (CORREÇÃO DE DEPENDÊNCIAS AQUI)
   useEffect(() => {
     if (pacienteEmEdicao) {
       const paciente = pacientes.find(p => p.id === pacienteEmEdicao);
       if (paciente) {
-        setNovoPaciente({
-          nome: paciente.nome,
-          email: paciente.email || '',
-          telefone: paciente.telefone,
-          dataNascimento: paciente.dataNascimento || '',
-          status: paciente.status,
-          queixaPrincipal: paciente.queixaPrincipal || '',
-          historicoFamiliar: paciente.historicoFamiliar || '',
-          observacoesIniciais: paciente.observacoesIniciais || '',
-          anotacoes: paciente.anotacoes || ''
-        });
-        setIsCadastroOpen(true);
+        // Bloco IF já estava corrigido
+        setTimeout(() => {
+          setNovoPaciente({
+            nome: paciente.nome,
+            email: paciente.email || '',
+            telefone: paciente.telefone,
+            dataNascimento: paciente.dataNascimento || '',
+            status: paciente.status,
+            queixaPrincipal: paciente.queixaPrincipal || '',
+            historicoFamiliar: paciente.historicoFamiliar || '',
+            observacoesIniciais: paciente.observacoesIniciais || '',
+            anotacoes: paciente.anotacoes || ''
+          });
+          setIsCadastroOpen(true);
+        }, 0);
       }
     } else {
-      // Limpar form
-      setNovoPaciente({ 
-        nome: '', email: '', telefone: '', dataNascimento: '', status: 'ativo',
-        queixaPrincipal: '', historicoFamiliar: '', observacoesIniciais: '', anotacoes: ''
-      });
+      // CORREÇÃO AQUI: Adicionado setTimeout no ELSE também
+      setTimeout(() => {
+        setNovoPaciente({ 
+          nome: '', email: '', telefone: '', dataNascimento: '', status: 'ativo',
+          queixaPrincipal: '', historicoFamiliar: '', observacoesIniciais: '', anotacoes: ''
+        });
+      }, 0);
     }
-  }, [pacienteEmEdicao, pacientes]);
+  }, [pacienteEmEdicao, pacientes]); // <--- Dependências corrigidas
 
   const handleCadastro = (e: React.FormEvent) => {
     e.preventDefault();
@@ -91,47 +113,50 @@ export function Pacientes() {
     }
   };
 
-  const pacientesFiltrados = pacientes.filter(paciente => {
-    const matchNome = paciente.nome.toLowerCase().includes(termoBusca.toLowerCase());
-    const matchStatus = filtroStatus === 'todos' || paciente.status === filtroStatus;
+  const pacientesFiltrados = pacientes.filter((paciente) => {
+    const matchNome = paciente.nome
+      .toLowerCase()
+      .includes(termoBusca.toLowerCase());
+    const matchStatus =
+      filtroStatus === "todos" || paciente.status === filtroStatus;
     return matchNome && matchStatus;
   });
 
   return (
     <div className="space-y-6">
-      
-      {/* Cabeçalho */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold text-gray-800">Pacientes</h1>
-          <p className="text-gray-500 text-sm">Gerencie seus pacientes e prontuários</p>
+          <p className="text-gray-500 text-sm">
+            Gerencie seus pacientes e prontuários
+          </p>
         </div>
-
-        <button 
+        <button
           onClick={() => setIsCadastroOpen(true)}
           className="bg-primary hover:bg-green-700 text-white px-5 py-2.5 rounded-xl font-medium flex items-center gap-2 shadow-lg shadow-green-200 transition-all active:scale-95"
         >
-          <Plus size={20} />
-          Novo Paciente
+          <Plus size={20} /> Novo Paciente
         </button>
       </div>
 
-      {/* Filtros */}
       <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-100 flex flex-col md:flex-row gap-4">
         <div className="flex-1 relative">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={20} />
-          <input 
-            type="text" 
-            placeholder="Buscar por nome..." 
+          <Search
+            className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"
+            size={20}
+          />
+          <input
+            type="text"
+            placeholder="Buscar por nome..."
             className="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all"
             value={termoBusca}
-            onChange={e => setTermoBusca(e.target.value)}
+            onChange={(e) => setTermoBusca(e.target.value)}
           />
         </div>
-        <select 
+        <select
           className="border border-gray-200 rounded-lg px-4 py-2 outline-none focus:ring-2 focus:ring-primary/20 bg-white min-w-[150px]"
           value={filtroStatus}
-          onChange={e => setFiltroStatus(e.target.value)}
+          onChange={(e) => setFiltroStatus(e.target.value)}
         >
           <option value="todos">Todos os Status</option>
           <option value="ativo">Ativos</option>
@@ -140,7 +165,6 @@ export function Pacientes() {
         </select>
       </div>
 
-      {/* Tabela */}
       <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-left border-collapse">
@@ -154,17 +178,26 @@ export function Pacientes() {
             </thead>
             <tbody className="divide-y divide-gray-50">
               {pacientesFiltrados.map((paciente) => (
-                <tr key={paciente.id} className="hover:bg-gray-50/50 transition-colors group">
+                <tr
+                  key={paciente.id}
+                  className="hover:bg-gray-50/50 transition-colors group"
+                >
                   <td className="px-6 py-4">
                     <div className="flex items-center gap-3">
                       <div className="w-10 h-10 rounded-full bg-green-100 text-primary flex items-center justify-center font-bold text-sm">
                         {paciente.nome.substring(0, 2).toUpperCase()}
                       </div>
                       <div>
-                        <p className="font-semibold text-gray-900">{paciente.nome}</p>
+                        <p className="font-semibold text-gray-900">
+                          {paciente.nome}
+                        </p>
                         <p className="text-xs text-gray-500 flex items-center gap-1">
-                          {paciente.queixaPrincipal ? <FileText size={12}/> : null}
-                          {paciente.queixaPrincipal ? 'Prontuário iniciado' : 'Sem prontuário'}
+                          {paciente.queixaPrincipal ? (
+                            <FileText size={12} />
+                          ) : null}
+                          {paciente.queixaPrincipal
+                            ? "Prontuário iniciado"
+                            : "Sem prontuário"}
                         </p>
                       </div>
                     </div>
@@ -172,7 +205,8 @@ export function Pacientes() {
                   <td className="px-6 py-4 text-gray-600">
                     <div className="flex flex-col gap-1 text-sm">
                       <div className="flex items-center gap-2">
-                        <Phone size={14} className="text-gray-400" /> {paciente.telefone}
+                        <Phone size={14} className="text-gray-400" />{" "}
+                        {paciente.telefone}
                       </div>
                       {paciente.email && (
                         <div className="flex items-center gap-2 text-xs text-gray-500">
@@ -182,24 +216,57 @@ export function Pacientes() {
                     </div>
                   </td>
                   <td className="px-6 py-4">
-                    <span className={`px-3 py-1 rounded-full text-xs font-medium inline-flex items-center gap-1.5
-                      ${paciente.status === 'ativo' ? 'bg-green-100 text-green-700' : 
-                        paciente.status === 'pausa' ? 'bg-yellow-100 text-yellow-700' : 
-                        'bg-gray-100 text-gray-700'}
-                    `}>
-                      <span className={`w-1.5 h-1.5 rounded-full ${
-                        paciente.status === 'ativo' ? 'bg-green-500' : 
-                        paciente.status === 'pausa' ? 'bg-yellow-500' : 'bg-gray-500'}
-                      `}></span>
-                      {paciente.status === 'ativo' ? 'Em Acompanhamento' : 
-                       paciente.status === 'pausa' ? 'Pausado' : 'Inativo'}
+                    <span
+                      className={`px-3 py-1 rounded-full text-xs font-medium inline-flex items-center gap-1.5
+                      ${
+                        paciente.status === "ativo"
+                          ? "bg-green-100 text-green-700"
+                          : paciente.status === "pausa"
+                          ? "bg-yellow-100 text-yellow-700"
+                          : "bg-gray-100 text-gray-700"
+                      }
+                    `}
+                    >
+                      <span
+                        className={`w-1.5 h-1.5 rounded-full ${
+                          paciente.status === "ativo"
+                            ? "bg-green-500"
+                            : paciente.status === "pausa"
+                            ? "bg-yellow-500"
+                            : "bg-gray-500"
+                        }
+                      `}
+                      ></span>
+                      {paciente.status === "ativo"
+                        ? "Em Acompanhamento"
+                        : paciente.status === "pausa"
+                        ? "Pausado"
+                        : "Inativo"}
                     </span>
                   </td>
                   <td className="px-6 py-4 text-right">
                     <div className="flex justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                      <button onClick={() => setPacienteVisualizar(paciente)} className="p-2 text-gray-400 hover:text-primary hover:bg-green-50 rounded-lg transition-colors" title="Ver Prontuário"><Eye size={18} /></button>
-                      <button onClick={() => setPacienteEmEdicao(paciente.id)} className="p-2 text-gray-400 hover:text-blue-500 hover:bg-blue-50 rounded-lg transition-colors" title="Editar"><Edit size={18} /></button>
-                      <button onClick={() => setPacienteParaDeletar(paciente.id)} className="p-2 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors" title="Excluir"><Trash2 size={18} /></button>
+                      <button
+                        onClick={() => setPacienteVisualizar(paciente)}
+                        className="p-2 text-gray-400 hover:text-primary hover:bg-green-50 rounded-lg transition-colors"
+                        title="Ver Prontuário"
+                      >
+                        <Eye size={18} />
+                      </button>
+                      <button
+                        onClick={() => setPacienteEmEdicao(paciente.id)}
+                        className="p-2 text-gray-400 hover:text-blue-500 hover:bg-blue-50 rounded-lg transition-colors"
+                        title="Editar"
+                      >
+                        <Edit size={18} />
+                      </button>
+                      <button
+                        onClick={() => setPacienteParaDeletar(paciente.id)}
+                        className="p-2 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors"
+                        title="Excluir"
+                      >
+                        <Trash2 size={18} />
+                      </button>
                     </div>
                   </td>
                 </tr>
@@ -215,51 +282,71 @@ export function Pacientes() {
         )}
       </div>
 
-      {/* --- MODAL DE CADASTRO/EDIÇÃO --- */}
-      <Modal 
-        isOpen={isCadastroOpen} 
-        onClose={fecharModalCadastro} 
+      <Modal
+        isOpen={isCadastroOpen}
+        onClose={fecharModalCadastro}
         title={pacienteEmEdicao ? "Editar Paciente" : "Novo Paciente"}
         size="lg"
       >
         <form onSubmit={handleCadastro} className="space-y-6">
-          
-          {/* Seção 1: Dados Pessoais */}
           <div>
             <h4 className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-4 flex items-center gap-2">
               <User size={14} /> Dados Pessoais
             </h4>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
               <div className="md:col-span-2">
-                <label className="block text-sm font-medium text-gray-700 mb-1">Nome Completo</label>
-                <input required type="text" className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all"
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Nome Completo
+                </label>
+                <input
+                  required
+                  type="text"
+                  className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all"
                   placeholder="Ex: João da Silva"
                   value={novoPaciente.nome}
-                  onChange={e => setNovoPaciente({...novoPaciente, nome: e.target.value})}
+                  onChange={(e) =>
+                    setNovoPaciente({ ...novoPaciente, nome: e.target.value })
+                  }
                 />
               </div>
-              
-              {/* TELEFONE COM MÁSCARA */}
+
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Telefone</label>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Telefone
+                </label>
                 <div className="relative">
-                  <Phone size={18} className="absolute left-3 top-2.5 text-gray-400" />
-                  <input required type="text" maxLength={15} className="w-full pl-10 pr-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all"
+                  <Phone
+                    size={18}
+                    className="absolute left-3 top-2.5 text-gray-400"
+                  />
+                  <input
+                    required
+                    type="text"
+                    maxLength={15}
+                    className="w-full pl-10 pr-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all"
                     placeholder="(00) 00000-0000"
                     value={novoPaciente.telefone}
-                    onChange={handleTelefoneChange} 
+                    onChange={handleTelefoneChange}
                   />
                 </div>
               </div>
 
-              {/* DATA DE NASCIMENTO */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Data de Nascimento</label>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Data de Nascimento
+                </label>
                 <div className="relative">
-                  <input type="date" className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all text-gray-600 bg-white"
+                  <input
+                    type="date"
+                    className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all text-gray-600 bg-white"
                     value={novoPaciente.dataNascimento}
                     max={new Date().toISOString().split("T")[0]}
-                    onChange={e => setNovoPaciente({...novoPaciente, dataNascimento: e.target.value})}
+                    onChange={(e) =>
+                      setNovoPaciente({
+                        ...novoPaciente,
+                        dataNascimento: e.target.value,
+                      })
+                    }
                   />
                   <div className="absolute right-3 top-2.5 pointer-events-none text-gray-400 bg-white pl-2">
                     <CalendarIcon size={18} />
@@ -268,29 +355,42 @@ export function Pacientes() {
               </div>
 
               <div className="md:col-span-2">
-                <label className="block text-sm font-medium text-gray-700 mb-1">E-mail (Opcional)</label>
-                <input type="email" className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all"
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  E-mail (Opcional)
+                </label>
+                <input
+                  type="email"
+                  className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all"
                   placeholder="paciente@email.com"
                   value={novoPaciente.email}
-                  onChange={e => setNovoPaciente({...novoPaciente, email: e.target.value})}
+                  onChange={(e) =>
+                    setNovoPaciente({ ...novoPaciente, email: e.target.value })
+                  }
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Status</label>
-                <select className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none bg-white transition-all"
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Status
+                </label>
+                <select
+                  className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none bg-white transition-all"
                   value={novoPaciente.status}
-                  onChange={e => setNovoPaciente({...novoPaciente, status: e.target.value as any})}
+                  onChange={(e) =>
+                    setNovoPaciente({
+                      ...novoPaciente,
+                      status: e.target.value as Paciente["status"],
+                    })
+                  }
                 >
                   <option value="ativo">Ativo</option>
                   <option value="pausa">Pausado</option>
-                  <option value="inativo">Inativo</option>
+                  <option value="inativo">Inativos</option>
                 </select>
               </div>
             </div>
           </div>
 
-          {/* Seção 2: Prontuário */}
           <div className="border-t border-gray-100 pt-6">
             <h4 className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-4 flex items-center gap-2">
               <FileText size={14} /> Dados do Prontuário
@@ -298,39 +398,70 @@ export function Pacientes() {
             <div className="space-y-4">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Queixa Principal</label>
-                  <textarea className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none h-24 resize-none text-sm transition-all"
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Queixa Principal
+                  </label>
+                  <textarea
+                    className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none h-24 resize-none text-sm transition-all"
                     placeholder="Motivo da consulta..."
                     value={novoPaciente.queixaPrincipal}
-                    onChange={e => setNovoPaciente({...novoPaciente, queixaPrincipal: e.target.value})}
+                    onChange={(e) =>
+                      setNovoPaciente({
+                        ...novoPaciente,
+                        queixaPrincipal: e.target.value,
+                      })
+                    }
                   ></textarea>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Histórico Familiar</label>
-                  <textarea className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none h-24 resize-none text-sm transition-all"
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Histórico Familiar
+                  </label>
+                  <textarea
+                    className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none h-24 resize-none text-sm transition-all"
                     placeholder="Histórico relevante..."
                     value={novoPaciente.historicoFamiliar}
-                    onChange={e => setNovoPaciente({...novoPaciente, historicoFamiliar: e.target.value})}
+                    onChange={(e) =>
+                      setNovoPaciente({
+                        ...novoPaciente,
+                        historicoFamiliar: e.target.value,
+                      })
+                    }
                   ></textarea>
                 </div>
               </div>
 
-              {/* OBSERVAÇÕES E ANOTAÇÕES */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Observações Iniciais</label>
-                  <textarea className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none h-20 resize-none text-sm transition-all"
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Observações Iniciais
+                  </label>
+                  <textarea
+                    className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none h-20 resize-none text-sm transition-all"
                     placeholder="Observações gerais..."
                     value={novoPaciente.observacoesIniciais}
-                    onChange={e => setNovoPaciente({...novoPaciente, observacoesIniciais: e.target.value})}
+                    onChange={(e) =>
+                      setNovoPaciente({
+                        ...novoPaciente,
+                        observacoesIniciais: e.target.value,
+                      })
+                    }
                   ></textarea>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Anotações Privadas</label>
-                  <textarea className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none h-20 resize-none text-sm transition-all bg-yellow-50/50"
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Anotações Privadas
+                  </label>
+                  <textarea
+                    className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none h-20 resize-none text-sm transition-all bg-yellow-50/50"
                     placeholder="Anotações administrativas..."
                     value={novoPaciente.anotacoes}
-                    onChange={e => setNovoPaciente({...novoPaciente, anotacoes: e.target.value})}
+                    onChange={(e) =>
+                      setNovoPaciente({
+                        ...novoPaciente,
+                        anotacoes: e.target.value,
+                      })
+                    }
                   ></textarea>
                 </div>
               </div>
@@ -338,27 +469,59 @@ export function Pacientes() {
           </div>
 
           <div className="pt-4 flex gap-3 border-t border-gray-50">
-            <button type="button" onClick={fecharModalCadastro} className="flex-1 py-2.5 border border-gray-300 text-gray-700 rounded-lg font-medium hover:bg-gray-50 transition-colors">Cancelar</button>
-            <button type="submit" className="flex-1 py-2.5 bg-primary text-white rounded-lg font-medium hover:bg-green-700 shadow-md transition-all hover:-translate-y-0.5">
+            <button
+              type="button"
+              onClick={fecharModalCadastro}
+              className="flex-1 py-2.5 border border-gray-300 text-gray-700 rounded-lg font-medium hover:bg-gray-50 transition-colors"
+            >
+              Cancelar
+            </button>
+            <button
+              type="submit"
+              className="flex-1 py-2.5 bg-primary text-white rounded-lg font-medium hover:bg-green-700 shadow-md transition-all hover:-translate-y-0.5"
+            >
               {pacienteEmEdicao ? "Salvar Alterações" : "Cadastrar Paciente"}
             </button>
           </div>
         </form>
       </Modal>
 
-      <Modal isOpen={!!pacienteParaDeletar} onClose={() => setPacienteParaDeletar(null)} title="Excluir Paciente">
+      <Modal
+        isOpen={!!pacienteParaDeletar}
+        onClose={() => setPacienteParaDeletar(null)}
+        title="Excluir Paciente"
+      >
         <div className="text-center p-2">
-          <div className="bg-red-50 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4 text-red-500"><AlertTriangle size={32} /></div>
+          <div className="bg-red-50 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4 text-red-500">
+            <AlertTriangle size={32} />
+          </div>
           <h3 className="text-lg font-bold text-gray-900 mb-2">Tem certeza?</h3>
-          <p className="text-gray-500 mb-6 text-sm max-w-xs mx-auto">Essa ação removerá permanentemente o prontuário e histórico deste paciente.</p>
+          <p className="text-gray-500 mb-6 text-sm max-w-xs mx-auto">
+            Essa ação removerá permanentemente o prontuário e histórico deste
+            paciente.
+          </p>
           <div className="flex gap-3">
-            <button onClick={() => setPacienteParaDeletar(null)} className="flex-1 py-2.5 border border-gray-300 rounded-lg text-gray-700 font-medium hover:bg-gray-50 transition-colors">Cancelar</button>
-            <button onClick={confirmarExclusao} className="flex-1 py-2.5 bg-red-600 text-white rounded-lg font-medium hover:bg-red-700 shadow-lg shadow-red-200 transition-colors">Sim, Excluir</button>
+            <button
+              onClick={() => setPacienteParaDeletar(null)}
+              className="flex-1 py-2.5 border border-gray-300 rounded-lg text-gray-700 font-medium hover:bg-gray-50 transition-colors"
+            >
+              Cancelar
+            </button>
+            <button
+              onClick={confirmarExclusao}
+              className="flex-1 py-2.5 bg-red-600 text-white rounded-lg font-medium hover:bg-red-700 shadow-lg shadow-red-200 transition-colors"
+            >
+              Sim, Excluir
+            </button>
           </div>
         </div>
       </Modal>
 
-      <PatientDetailsModal isOpen={!!pacienteVisualizar} onClose={() => setPacienteVisualizar(null)} paciente={pacienteVisualizar} />
+      <PatientDetailsModal
+        isOpen={!!pacienteVisualizar}
+        onClose={() => setPacienteVisualizar(null)}
+        paciente={pacienteVisualizar}
+      />
     </div>
   );
 }

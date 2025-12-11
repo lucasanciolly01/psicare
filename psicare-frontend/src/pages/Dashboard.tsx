@@ -2,15 +2,20 @@ import { Users, CalendarCheck, Clock, Plus, ArrowRight } from 'lucide-react';
 import { StatCard } from '../components/ui/StatCard';
 import { usePacientes } from '../context/PacientesContext';
 import { useAgendamentos } from '../context/AgendamentosContext';
-import { useAuth } from '../context/AuthContext'; // Importei para pegar o nome do usuário
+import { useAuth } from '../context/AuthContext';
 import { Link } from 'react-router-dom';
 import { format, parseISO, isToday } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 
 export function Dashboard() {
   const { usuario } = useAuth();
-  const { totalAtivos, pacientes } = usePacientes();
+  
+  // 1. CORREÇÃO: Removemos 'totalAtivos' do contexto (pois não existe lá)
+  const { pacientes } = usePacientes();
   const { sessoesHoje, sessoesSemana, proximosAgendamentos } = useAgendamentos();
+
+  // 2. CORREÇÃO: Calculamos o total aqui mesmo ("quantos pacientes têm status 'ativo'?")
+  const totalAtivos = pacientes.filter(p => p.status === 'ativo').length;
 
   const pacientesRecentes = pacientes.slice(0, 4);
 
@@ -20,7 +25,7 @@ export function Dashboard() {
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-end gap-4">
         <div>
           <h1 className="text-3xl font-bold text-gray-800">
-            Bom dia, {usuario?.nome.split(' ')[0] || 'Doutor(a)'}! 👋
+            Bom dia, {usuario?.nome.split(' ')[0] || 'Doutor(a)'}!
           </h1>
           <p className="text-gray-500 mt-2">Aqui está o resumo da sua prática hoje.</p>
         </div>
@@ -31,7 +36,7 @@ export function Dashboard() {
         </Link>
       </div>
 
-      {/* Grid de Cards (Atualizado com cores simples) */}
+      {/* Grid de Cards */}
       <section className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <StatCard 
           title="Pacientes Ativos" 
@@ -79,7 +84,6 @@ export function Dashboard() {
                     <div className="flex items-center gap-4">
                       <div className="text-center min-w-[60px]">
                         <span className="block text-lg font-bold text-gray-800">{sessao.hora}</span>
-                        {/* Se não for hoje, mostra a data embaixo da hora */}
                         {!isSessaoHoje && (
                           <span className="block text-[10px] text-gray-500 uppercase font-bold">
                             {format(parseISO(sessao.data), 'dd MMM', { locale: ptBR })}
@@ -87,7 +91,6 @@ export function Dashboard() {
                         )}
                       </div>
                       
-                      {/* Linha vertical colorida */}
                       <div className={`w-1 h-10 rounded-full ${
                         sessao.status === 'concluido' ? 'bg-green-500' : 
                         sessao.status === 'cancelado' ? 'bg-red-500' : 'bg-blue-500'

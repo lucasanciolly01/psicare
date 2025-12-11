@@ -1,5 +1,5 @@
-import { createContext, useContext, useState, useEffect, type ReactNode } from 'react'; // CORREÇÃO 1: 'type ReactNode'
-import { parseISO, isThisWeek, isToday, isAfter } from 'date-fns'; // CORREÇÃO 2: Removi 'isSameDay' que não estava sendo usado
+import { createContext, useContext, useState, useEffect, type ReactNode } from 'react';
+import { parseISO, isToday, isThisWeek, isAfter } from 'date-fns';
 
 // 1. Definição dos Tipos
 export interface Agendamento {
@@ -77,6 +77,8 @@ export function AgendamentosProvider({ children }: { children: ReactNode }) {
   );
 }
 
+// ADICIONE ESTA LINHA ABAIXO PARA O LINT NÃO RECLAMAR:
+// eslint-disable-next-line react-refresh/only-export-components
 export function useAgendamentos() {
   return useContext(AgendamentosContext);
 }

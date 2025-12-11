@@ -1,14 +1,7 @@
-import { createContext, useContext, useState, type ReactNode, useEffect } from 'react';
+import { createContext, useContext, useState, useEffect, type ReactNode } from 'react';
+import { storageService } from '../services/storageService';
 
-// FUNÇÃO DE DEBOUNCE (Adicionada aqui para evitar dependências externas)
-const debounce = (func: Function, delay: number) => {
-  let timeout: ReturnType<typeof setTimeout>;
-  return (...args: any[]) => {
-    clearTimeout(timeout);
-    timeout = setTimeout(() => func(...args), delay);
-  };
-};
-
+// 1. Definição da Sessão (Evolução)
 export interface Sessao {
   id: string;
   data: string;
@@ -17,77 +10,62 @@ export interface Sessao {
   evolucao: string;
 }
 
+// 2. Definição do Paciente (Atualizada com Sessões)
 export interface Paciente {
   id: string;
   nome: string;
+  email: string;
   telefone: string;
+  dataNascimento: string;
   status: 'ativo' | 'inativo' | 'pausa';
-  email?: string;
-  dataNascimento?: string;
+  
+  // Prontuário
   queixaPrincipal?: string;
   historicoFamiliar?: string;
   observacoesIniciais?: string;
   anotacoes?: string;
-  sessoes: Sessao[]; 
+  
+  // Histórico de Evoluções
+  sessoes: Sessao[];
 }
 
 interface PacientesContextData {
   pacientes: Paciente[];
-  adicionarPaciente: (paciente: Omit<Paciente, 'id' | 'sessoes'> & { sessoes?: Sessao[] }) => void;
+  adicionarPaciente: (paciente: Omit<Paciente, 'id' | 'status' | 'sessoes'>) => void;
+  editarPaciente: (id: string, dados: Partial<Paciente>) => void;
   removerPaciente: (id: string) => void;
-  atualizarPaciente: (id: string, dados: Partial<Omit<Paciente, 'id'>>) => void;
-  totalAtivos: number;
-  adicionarSessao: (pacienteId: string, sessao: Omit<Sessao, 'id'>) => void; 
+  atualizarPaciente: (id: string, dados: Partial<Paciente>) => void;
+  
+  // Nova função exportada
+  adicionarSessao: (pacienteId: string, sessao: Omit<Sessao, 'id'>) => void;
 }
 
 const PacientesContext = createContext<PacientesContextData>({} as PacientesContextData);
 
 export function PacientesProvider({ children }: { children: ReactNode }) {
   const [pacientes, setPacientes] = useState<Paciente[]>(() => {
-    const saved = localStorage.getItem('psicare_pacientes_v2');
-    
-    if (saved) {
-        const parsed = JSON.parse(saved);
-        return parsed.map((p: any) => ({ ...p, sessoes: p.sessoes || [], })) as Paciente[];
-    }
-
-    return [
-      { id: '1', nome: 'Ana Souza', telefone: '(11) 99999-9999', status: 'ativo', email: 'ana@email.com', sessoes: [] },
-      { id: '2', nome: 'Carlos Mendes', telefone: '(11) 98888-8888', status: 'pausa', email: 'carlos@email.com', sessoes: [] },
-    ];
+    const data = storageService.get<Paciente[]>('pacientes');
+    // Garante que todo paciente tenha um array de sessoes, mesmo os antigos
+    return data ? data.map(p => ({ ...p, sessoes: p.sessoes || [] })) : [];
   });
 
-  // 1. Criar a função debounced para salvar (salva com 500ms de delay após a última mudança)
-  const debouncedSave = debounce((data: Paciente[]) => {
-    localStorage.setItem('psicare_pacientes_v2', JSON.stringify(data));
-  }, 500); 
-
-  // 2. Usar o debouncedSave no useEffect
   useEffect(() => {
-    debouncedSave(pacientes);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [pacientes]); 
+    storageService.set('pacientes', pacientes);
+  }, [pacientes]);
 
-  const adicionarPaciente = (dadosPaciente: Omit<Paciente, 'id' | 'sessoes'> & { sessoes?: Sessao[] }) => {
+  const adicionarPaciente = (dados: Omit<Paciente, 'id' | 'status' | 'sessoes'>) => {
     const novoPaciente: Paciente = {
-      id: Date.now().toString(),
-      sessoes: [], 
-      ...dadosPaciente,
+      id: crypto.randomUUID(),
+      status: 'ativo',
+      sessoes: [], // Inicia com histórico vazio
+      ...dados,
     };
-    setPacientes((state) => [novoPaciente, ...state]);
+    setPacientes((state) => [...state, novoPaciente]);
   };
-  
-  const adicionarSessao = (pacienteId: string, dadosSessao: Omit<Sessao, 'id'>) => {
-    const novaSessao: Sessao = {
-      id: Date.now().toString(),
-      ...dadosSessao,
-    };
-    setPacientes((state) => 
-      state.map((p) =>
-        p.id === pacienteId
-          ? { ...p, sessoes: [novaSessao, ...p.sessoes] }
-          : p
-      )
+
+  const editarPaciente = (id: string, dados: Partial<Paciente>) => {
+    setPacientes((state) =>
+      state.map((p) => (p.id === id ? { ...p, ...dados } : p))
     );
   };
 
@@ -95,21 +73,35 @@ export function PacientesProvider({ children }: { children: ReactNode }) {
     setPacientes((state) => state.filter((p) => p.id !== id));
   };
 
-  const atualizarPaciente = (id: string, dados: Partial<Omit<Paciente, 'id'>>) => {
+  // 3. Função para adicionar evolução ao histórico do paciente
+  const adicionarSessao = (pacienteId: string, sessao: Omit<Sessao, 'id'>) => {
     setPacientes((state) => 
-      state.map((p) => p.id === id ? { ...p, ...dados } : p)
+      state.map((p) => {
+        if (p.id === pacienteId) {
+          const novaSessao: Sessao = { ...sessao, id: crypto.randomUUID() };
+          // Adiciona a nova sessão no topo ou final da lista
+          return { ...p, sessoes: [...p.sessoes, novaSessao] };
+        }
+        return p;
+      })
     );
   };
 
-  const totalAtivos = pacientes.filter(p => p.status === 'ativo').length;
-
   return (
-    <PacientesContext.Provider value={{ pacientes, adicionarPaciente, removerPaciente, atualizarPaciente, totalAtivos, adicionarSessao }}>
+    <PacientesContext.Provider value={{ 
+      pacientes, 
+      adicionarPaciente, 
+      editarPaciente, 
+      atualizarPaciente: editarPaciente, 
+      removerPaciente,
+      adicionarSessao 
+    }}>
       {children}
     </PacientesContext.Provider>
   );
 }
 
+// eslint-disable-next-line react-refresh/only-export-components
 export function usePacientes() {
   return useContext(PacientesContext);
 }

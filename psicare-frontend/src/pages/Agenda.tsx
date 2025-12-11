@@ -6,6 +6,8 @@ import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { useAgendamentos } from '../context/AgendamentosContext';
 import { usePacientes } from '../context/PacientesContext';
+// IMPORTAÇÃO DA NOVA FUNÇÃO UTILITÁRIA
+import { verificarConflito } from '../utils/agendamento';
 
 export function Agenda() {
   const { 
@@ -29,27 +31,9 @@ export function Agenda() {
 
   const pacientesAtivos = pacientes.filter(p => p.status === 'ativo');
 
-  // --- 1. VERIFICAÇÃO DE INTERVALO DE 50 MINUTOS ---
-  const verificarConflito = (data: string, horaNova: string): boolean => {
-    const [hNova, mNova] = horaNova.split(':').map(Number);
-    const minutosNovo = hNova * 60 + mNova;
+  // A FUNÇÃO verificarConflito LOCAL FOI REMOVIDA DAQUI
 
-    const agendamentosDoDia = agendamentos.filter(a => a.data === data && a.status !== 'cancelado');
-
-    for (const agendamento of agendamentosDoDia) {
-      const [hExistente, mExistente] = agendamento.hora.split(':').map(Number);
-      const minutosExistente = hExistente * 60 + mExistente;
-
-      const diferenca = Math.abs(minutosNovo - minutosExistente);
-
-      if (diferenca < 50) {
-        return true; 
-      }
-    }
-    return false;
-  };
-
-  // --- 2. FUNÇÃO DE SALVAR COM AS VALIDAÇÕES ---
+  // --- FUNÇÃO DE SALVAR COM AS VALIDAÇÕES ---
   const handleSaveAppointment = (e: React.FormEvent) => {
     e.preventDefault();
     setErroConflito(null);
@@ -74,7 +58,8 @@ export function Agenda() {
     const dataSelecionadaStr = selectedDate.toISOString().split('T')[0];
 
     // REGRA 2: Bloquear Conflito de 50min
-    if (verificarConflito(dataSelecionadaStr, novoAgendamento.hora)) {
+    // ATENÇÃO: Passamos 'agendamentos' como primeiro argumento agora
+    if (verificarConflito(agendamentos, dataSelecionadaStr, novoAgendamento.hora)) {
       setErroConflito("Conflito! É necessário intervalo de 50min entre sessões.");
       return;
     }

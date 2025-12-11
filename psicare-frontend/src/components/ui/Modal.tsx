@@ -7,15 +7,20 @@ interface ModalProps {
   onClose: () => void;
   title: string;
   children: ReactNode;
-  size?: 'sm' | 'md' | 'lg' | 'xl'; // A propriedade que estava faltando!
+  size?: 'sm' | 'md' | 'lg' | 'xl';
 }
 
 export function Modal({ isOpen, onClose, title, children, size = 'md' }: ModalProps) {
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
-    setMounted(true);
-    return () => setMounted(false);
+    // CORREÇÃO: setTimeout(..., 0) move a atualização para o final da fila de eventos
+    // evitando o erro "setState synchronously within an effect"
+    const timer = setTimeout(() => setMounted(true), 0);
+    return () => {
+      setMounted(false);
+      clearTimeout(timer);
+    };
   }, []);
 
   useEffect(() => {
@@ -24,7 +29,7 @@ export function Modal({ isOpen, onClose, title, children, size = 'md' }: ModalPr
     };
     if (isOpen) {
       window.addEventListener('keydown', handleEsc);
-      document.body.style.overflow = 'hidden'; // Trava o scroll da página
+      document.body.style.overflow = 'hidden';
     }
     return () => {
       window.removeEventListener('keydown', handleEsc);
@@ -34,7 +39,6 @@ export function Modal({ isOpen, onClose, title, children, size = 'md' }: ModalPr
 
   if (!isOpen || !mounted) return null;
 
-  // Larguras responsivas
   const sizeClasses = {
     sm: 'max-w-sm',
     md: 'max-w-lg',
@@ -44,10 +48,7 @@ export function Modal({ isOpen, onClose, title, children, size = 'md' }: ModalPr
 
   return createPortal(
     <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fade-in">
-      
-      {/* Overlay para fechar ao clicar fora */}
       <div className="absolute inset-0" onClick={onClose} />
-
       <div 
         className={`bg-white rounded-2xl shadow-2xl w-full ${sizeClasses[size]} flex flex-col max-h-[90vh] relative z-10 animate-scale-in`}
         onClick={(e) => e.stopPropagation()}
@@ -61,7 +62,6 @@ export function Modal({ isOpen, onClose, title, children, size = 'md' }: ModalPr
             <X size={24} />
           </button>
         </div>
-
         <div className="p-6 overflow-y-auto custom-scrollbar">
           {children}
         </div>

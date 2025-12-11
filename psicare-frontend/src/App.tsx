@@ -1,18 +1,17 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
-import { MainLayout } from './components/layout/MainLayout';
-import { Dashboard } from './pages/Dashboard';
-import { Agenda } from './pages/Agenda';
-import { Pacientes } from './pages/Pacientes';
-import { Perfil } from './pages/Perfil';
-import { Cadastro } from './pages/Cadastro';
-import { Login } from './pages/Login'; // Se você já criou a Login, importe aqui
-// 1. IMPORTAÇÕES NOVAS
-import { Termos } from './pages/Termos';
-import { Privacidade } from './pages/Privacidade';
-
+import { Suspense, lazy } from 'react';
 import { PacientesProvider } from './context/PacientesContext';
 import { AgendamentosProvider } from './context/AgendamentosContext';
 import { AuthProvider } from './context/AuthContext';
+
+// Lazy Imports
+const MainLayout = lazy(() => import('./components/layout/MainLayout').then(m => ({ default: m.MainLayout })));
+const Dashboard = lazy(() => import('./pages/Dashboard').then(m => ({ default: m.Dashboard })));
+const Agenda = lazy(() => import('./pages/Agenda').then(m => ({ default: m.Agenda })));
+const Pacientes = lazy(() => import('./pages/Pacientes').then(m => ({ default: m.Pacientes })));
+const Perfil = lazy(() => import('./pages/Perfil').then(m => ({ default: m.Perfil })));
+const Login = lazy(() => import('./pages/Login').then(m => ({ default: m.Login })));
+const Cadastro = lazy(() => import('./pages/Cadastro').then(m => ({ default: m.Cadastro })));
 
 function App() {
   return (
@@ -20,24 +19,20 @@ function App() {
       <AuthProvider>
         <PacientesProvider>
           <AgendamentosProvider>
-            <Routes>
-              {/* Rotas Públicas (Sem Sidebar) */}
-              <Route path="/cadastro" element={<Cadastro />} />
-              <Route path="/login" element={<Login />} /> {/* Se não tiver o arquivo Login.tsx, mantenha o placeholder */}
-              
-              {/* 2. ROTAS NOVAS AQUI */}
-              <Route path="/termos" element={<Termos />} />
-              <Route path="/privacidade" element={<Privacidade />} />
-
-              {/* Rotas Privadas (Com Sidebar) */}
-              <Route path="/" element={<MainLayout />}>
-                <Route index element={<Navigate to="/dashboard" replace />} />
-                <Route path="dashboard" element={<Dashboard />} />
-                <Route path="agenda" element={<Agenda />} />
-                <Route path="pacientes" element={<Pacientes />} />
-                <Route path="perfil" element={<Perfil />} />
-              </Route>
-            </Routes>
+            <Suspense fallback={<div className="flex h-screen items-center justify-center">Carregando PsiCare...</div>}>
+              <Routes>
+                <Route path="/login" element={<Login />} />
+                <Route path="/cadastro" element={<Cadastro />} />
+                
+                <Route path="/" element={<MainLayout />}>
+                  <Route index element={<Navigate to="/dashboard" replace />} />
+                  <Route path="dashboard" element={<Dashboard />} />
+                  <Route path="agenda" element={<Agenda />} />
+                  <Route path="pacientes" element={<Pacientes />} />
+                  <Route path="perfil" element={<Perfil />} />
+                </Route>
+              </Routes>
+            </Suspense>
           </AgendamentosProvider>
         </PacientesProvider>
       </AuthProvider>

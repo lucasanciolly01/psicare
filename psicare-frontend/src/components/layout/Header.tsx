@@ -21,7 +21,7 @@ export function Header({ onMenuClick }: HeaderProps) {
 
         <div>
           <h2 className="text-lg md:text-xl font-bold text-gray-800">
-            Olá, {usuario?.nome.split(' ')[0]} 👋
+            Olá, {usuario?.nome.split(' ')[0]} 
           </h2>
         </div>
       </div>
