@@ -41,7 +41,7 @@ export function Sidebar({ mobile, onClose }: SidebarProps) {
 
       {/* Navigation - MUDANÇA CRÍTICA AQUI */}
       {/* flex-1: Ocupa todo o espaço disponível no meio */}
-      {/* overflow-y-auto: Cria barra de rolagem SE os itens não couberem, sem empurrar o rodapé */}
+      {/* overflow-y-auto: Cria barra de rolagem SÓ AQUI se os itens não couberem, sem empurrar o rodapé */}
       <nav className="flex-1 px-4 overflow-y-auto custom-scrollbar">
         <p className="px-4 text-xs font-semibold text-gray-400 uppercase tracking-wider mb-4 mt-2">
           Menu Principal
@@ -77,7 +77,7 @@ export function Sidebar({ mobile, onClose }: SidebarProps) {
       </nav>
 
       {/* Footer Actions */}
-      {/* flex-shrink-0: Garante que essa parte nunca encolha ou suma */}
+      {/* flex-shrink-0: Garante que essa parte nunca encolha ou suma da tela */}
       <div className="p-4 border-t border-gray-50 mt-auto flex-shrink-0 bg-white">
         <NavLink 
           to="/perfil" 

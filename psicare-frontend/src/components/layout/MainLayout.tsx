@@ -46,8 +46,10 @@ export function MainLayout() {
             >
               <X size={20} />
             </button>
-            {/* Removemos o onClick aqui para não fechar ao clicar no menu em si, apenas nos links */}
+            
+            {/* Wrapper da Sidebar com altura total */}
             <div className="h-full flex flex-col">
+               {/* Passamos a função onClose para fechar o menu ao clicar num link */}
                <Sidebar mobile onClose={() => setIsMobileMenuOpen(false)} />
             </div>
           </div>
