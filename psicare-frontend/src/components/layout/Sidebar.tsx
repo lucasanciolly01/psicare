@@ -17,7 +17,6 @@ export function Sidebar({ mobile, onClose }: SidebarProps) {
     { icon: Users, label: 'Pacientes', path: '/pacientes' },
   ];
 
-  // Função auxiliar para fechar o menu apenas se estiver no mobile
   const handleLinkClick = () => {
     if (mobile && onClose) {
       onClose();
@@ -25,8 +24,6 @@ export function Sidebar({ mobile, onClose }: SidebarProps) {
   };
 
   return (
-    // Mudança: Removido min-h-screen, usado h-full. 
-    // Isso faz a sidebar ocupar exatamente o espaço que o pai (MainLayout) der a ela.
     <aside className="w-full md:w-72 bg-white border-r border-gray-100 h-full flex flex-col shadow-[4px_0_24px_rgba(0,0,0,0.02)] z-20 relative">
       
       {/* Logo Area */}
@@ -39,9 +36,7 @@ export function Sidebar({ mobile, onClose }: SidebarProps) {
         </p>
       </div>
 
-      {/* Navigation - MUDANÇA CRÍTICA AQUI */}
-      {/* flex-1: Ocupa todo o espaço disponível no meio */}
-      {/* overflow-y-auto: Cria barra de rolagem SÓ AQUI se os itens não couberem, sem empurrar o rodapé */}
+      {/* Navigation */}
       <nav className="flex-1 px-4 overflow-y-auto custom-scrollbar">
         <p className="px-4 text-xs font-semibold text-gray-400 uppercase tracking-wider mb-4 mt-2">
           Menu Principal
@@ -77,8 +72,8 @@ export function Sidebar({ mobile, onClose }: SidebarProps) {
       </nav>
 
       {/* Footer Actions */}
-      {/* flex-shrink-0: Garante que essa parte nunca encolha ou suma da tela */}
-      <div className="p-4 border-t border-gray-50 mt-auto flex-shrink-0 bg-white">
+      {/* MUDANÇA CRUCIAL: Adicionado 'pb-24' se for mobile, para levantar o conteúdo */}
+      <div className={`p-4 border-t border-gray-50 mt-auto flex-shrink-0 bg-white ${mobile ? 'pb-24' : ''}`}>
         <NavLink 
           to="/perfil" 
           onClick={handleLinkClick}
