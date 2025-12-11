@@ -1,5 +1,5 @@
 import { createContext, useContext, useState, useEffect, type ReactNode } from 'react';
-import { useNavigate } from 'react-router-dom'; // 1. Importação necessária
+import { useNavigate } from 'react-router-dom';
 
 interface Usuario {
   nome: string;
@@ -20,17 +20,12 @@ interface AuthContextData {
 const AuthContext = createContext<AuthContextData>({} as AuthContextData);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const navigate = useNavigate(); // 2. Inicialização do hook de navegação
+  const navigate = useNavigate();
 
+  // CORREÇÃO: Inicializa como null se não houver dados salvos (removemos o mock)
   const [usuario, setUsuario] = useState<Usuario | null>(() => {
     const saved = localStorage.getItem('psicare_auth_v2');
-    // Usuário padrão para testes
-    return saved ? JSON.parse(saved) : {
-      nome: 'Psicólogo Silva',
-      email: 'doutor@psicare.com',
-      telefone: '(11) 99999-9999',
-      iniciais: 'PS'
-    };
+    return saved ? JSON.parse(saved) : null; 
   });
 
   useEffect(() => {
@@ -52,14 +47,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const logout = () => {
     setUsuario(null);
-    localStorage.removeItem('psicare_auth_v2'); // Garante a limpeza imediata
-    navigate('/login'); // 3. Navegação via SPA (sem reload)
+    localStorage.removeItem('psicare_auth_v2');
+    navigate('/login');
   };
 
   const atualizarPerfil = (dados: Partial<Usuario>) => {
     if (!usuario) return;
     
-    // Recalcula iniciais se o nome mudar
     let novasIniciais = usuario.iniciais;
     if (dados.nome) {
       novasIniciais = dados.nome.substring(0, 2).toUpperCase();
@@ -68,7 +62,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setUsuario({ ...usuario, ...dados, iniciais: novasIniciais });
   };
 
-  // Lógica Profissional de Upload de Foto (Convertendo para Base64)
   const atualizarFoto = (file: File) => {
     if (!usuario) return;
 

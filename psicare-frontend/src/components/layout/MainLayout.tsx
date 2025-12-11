@@ -1,30 +1,41 @@
-import { useState } from 'react';
-import { Outlet } from 'react-router-dom';
+import { useState, useEffect } from 'react';
+import { Outlet, useNavigate } from 'react-router-dom';
 import { Sidebar } from './Sidebar';
 import { Header } from './Header';
 import { X } from 'lucide-react'; 
+import { useAuth } from '../../context/AuthContext';
 
 export function MainLayout() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const { usuario } = useAuth();
+  const navigate = useNavigate();
+
+  // CORREÇÃO: Redireciona para login se não estiver autenticado
+  useEffect(() => {
+    if (!usuario) {
+      navigate('/login', { replace: true });
+    }
+  }, [usuario, navigate]);
+
+  // Se não houver usuário, não renderiza nada (evita piscar a tela ou erros)
+  if (!usuario) return null;
 
   return (
     <div className="flex flex-row h-screen w-screen overflow-hidden bg-background font-sans">
       
-      {/* Sidebar Desktop (Sone no mobile, aparece no PC) */}
+      {/* Sidebar Desktop */}
       <div className="hidden md:flex h-full shadow-xl z-30">
         <Sidebar />
       </div>
 
-      {/* Sidebar Mobile (Overlay) */}
+      {/* Sidebar Mobile */}
       {isMobileMenuOpen && (
         <div className="fixed inset-0 z-50 flex md:hidden">
-          {/* Fundo Preto Transparente */}
           <div 
             className="fixed inset-0 bg-black/60 backdrop-blur-sm transition-opacity" 
             onClick={() => setIsMobileMenuOpen(false)} 
           />
           
-          {/* Menu Deslizante */}
           <div className="relative w-72 bg-white h-full shadow-2xl flex flex-col animate-in slide-in-from-left duration-300">
             <button 
               onClick={() => setIsMobileMenuOpen(false)}
