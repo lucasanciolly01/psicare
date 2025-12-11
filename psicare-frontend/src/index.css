@@ -1,0 +1,90 @@
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* === 1. ESTRUTURA DO LAYOUT (MANTIDO) === */
+/* Remove margens e garante altura total */
+html, body, #root {
+  height: 100%;
+  width: 100%;
+  margin: 0;
+  padding: 0;
+  overflow: hidden; /* Evita rolagem dupla na página inteira */
+}
+
+body {
+  background-color: #f8f9fb;
+  color: #1f2937;
+  font-family: 'Poppins', sans-serif;
+  -webkit-font-smoothing: antialiased; /* Texto mais nítido */
+}
+
+/* Força o root a ocupar o espaço correto sem centralizar (Correção do Vite) */
+#root {
+  display: flex;
+  flex-direction: column;
+  max-width: none !important;
+  margin: 0 !important;
+  text-align: left !important;
+}
+
+/* === 2. ESTILIZAÇÃO DA BARRA DE ROLAGEM (SCROLLBAR) === */
+/* Estilo geral para o navegador (opcional, mas recomendado) */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: #cbd5e1; /* gray-300 */
+  border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8; /* gray-400 */
+}
+
+/* Classe específica para áreas de scroll interno (como o Modal e a Tabela) */
+.custom-scrollbar::-webkit-scrollbar {
+  width: 6px; /* Um pouco mais fina */
+}
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: #f1f5f9; /* gray-100 */
+  border-radius: 4px;
+}
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: #d1d5db; /* gray-300 */
+  border-radius: 4px;
+}
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: #9ca3af; /* gray-400 */
+}
+
+/* === 3. ANIMAÇÕES PARA O MODAL === */
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes scaleIn {
+  from { 
+    transform: scale(0.96); 
+    opacity: 0; 
+  }
+  to { 
+    transform: scale(1); 
+    opacity: 1; 
+  }
+}
+
+/* Classes utilitárias que usamos no componente Modal.tsx */
+.animate-fade-in {
+  animation: fadeIn 0.2s ease-out forwards;
+}
+
+.animate-scale-in {
+  animation: scaleIn 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards; /* Curva 'bouncy' sutil */
+}
