@@ -1,8 +1,14 @@
+// src/components/layout/Sidebar.tsx
 import { LayoutDashboard, Calendar, Users, LogOut, Settings } from 'lucide-react';
-import { NavLink } from 'react-router-dom'; // Mudamos de Link para NavLink
+import { NavLink } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 
-export function Sidebar() {
+interface SidebarProps {
+  mobile?: boolean;
+  onClose?: () => void;
+}
+
+export function Sidebar({ mobile, onClose }: SidebarProps) {
   const { logout } = useAuth();
 
   const menuItems = [
@@ -11,11 +17,20 @@ export function Sidebar() {
     { icon: Users, label: 'Pacientes', path: '/pacientes' },
   ];
 
+  // Função auxiliar para fechar o menu apenas se estiver no mobile
+  const handleLinkClick = () => {
+    if (mobile && onClose) {
+      onClose();
+    }
+  };
+
   return (
-    <aside className="w-72 bg-white border-r border-gray-100 min-h-screen flex flex-col shadow-[4px_0_24px_rgba(0,0,0,0.02)] z-20 relative flex-shrink-0">
+    // Mudança: Removido min-h-screen, usado h-full. 
+    // Isso faz a sidebar ocupar exatamente o espaço que o pai (MainLayout) der a ela.
+    <aside className="w-full md:w-72 bg-white border-r border-gray-100 h-full flex flex-col shadow-[4px_0_24px_rgba(0,0,0,0.02)] z-20 relative">
       
       {/* Logo Area */}
-      <div className="p-8 pb-8">
+      <div className="p-8 pb-6 flex-shrink-0">
         <h1 className="text-3xl font-bold text-primary flex items-center gap-2 tracking-tight">
           💚 PsiCare
         </h1>
@@ -24,8 +39,10 @@ export function Sidebar() {
         </p>
       </div>
 
-      {/* Navigation */}
-      <nav className="flex-1 px-4">
+      {/* Navigation - MUDANÇA CRÍTICA AQUI */}
+      {/* flex-1: Ocupa todo o espaço disponível no meio */}
+      {/* overflow-y-auto: Cria barra de rolagem SE os itens não couberem, sem empurrar o rodapé */}
+      <nav className="flex-1 px-4 overflow-y-auto custom-scrollbar">
         <p className="px-4 text-xs font-semibold text-gray-400 uppercase tracking-wider mb-4 mt-2">
           Menu Principal
         </p>
@@ -34,7 +51,8 @@ export function Sidebar() {
             <li key={item.path}>
               <NavLink
                 to={item.path}
-                end={item.path === '/'} // TRUQUE SÊNIOR: Garante que o '/' só ativa na home exata
+                onClick={handleLinkClick}
+                end={item.path === '/'}
                 className={({ isActive }) => `
                   flex items-center gap-3.5 px-4 py-3.5 rounded-xl transition-all duration-300 group font-medium
                   ${isActive 
@@ -43,7 +61,6 @@ export function Sidebar() {
                   }
                 `}
               >
-                {/* Renderização condicional do ícone baseada no estado do link */}
                 {({ isActive }) => (
                   <>
                     <item.icon 
@@ -60,9 +77,11 @@ export function Sidebar() {
       </nav>
 
       {/* Footer Actions */}
-      <div className="p-4 border-t border-gray-50 mt-auto">
+      {/* flex-shrink-0: Garante que essa parte nunca encolha ou suma */}
+      <div className="p-4 border-t border-gray-50 mt-auto flex-shrink-0 bg-white">
         <NavLink 
           to="/perfil" 
+          onClick={handleLinkClick}
           className={({ isActive }) => `
             flex items-center gap-3 px-4 py-3 rounded-xl transition-colors mb-1 font-medium
             ${isActive 

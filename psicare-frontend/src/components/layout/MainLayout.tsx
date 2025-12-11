@@ -1,3 +1,4 @@
+// src/components/layout/MainLayout.tsx
 import { useState, useEffect } from 'react';
 import { Outlet, useNavigate } from 'react-router-dom';
 import { Sidebar } from './Sidebar';
@@ -10,41 +11,44 @@ export function MainLayout() {
   const { usuario } = useAuth();
   const navigate = useNavigate();
 
-  // CORREÇÃO: Redireciona para login se não estiver autenticado
   useEffect(() => {
     if (!usuario) {
       navigate('/login', { replace: true });
     }
   }, [usuario, navigate]);
 
-  // Se não houver usuário, não renderiza nada (evita piscar a tela ou erros)
   if (!usuario) return null;
 
   return (
-    <div className="flex flex-row h-screen w-screen overflow-hidden bg-background font-sans">
+    // Mudança 1: h-screen para h-[100dvh] para garantir altura correta no mobile
+    <div className="flex flex-row h-[100dvh] w-screen overflow-hidden bg-background font-sans">
       
       {/* Sidebar Desktop */}
       <div className="hidden md:flex h-full shadow-xl z-30">
         <Sidebar />
       </div>
 
-      {/* Sidebar Mobile */}
+      {/* Sidebar Mobile (Overlay) */}
       {isMobileMenuOpen && (
         <div className="fixed inset-0 z-50 flex md:hidden">
+          {/* Fundo Preto Transparente */}
           <div 
             className="fixed inset-0 bg-black/60 backdrop-blur-sm transition-opacity" 
             onClick={() => setIsMobileMenuOpen(false)} 
           />
           
-          <div className="relative w-72 bg-white h-full shadow-2xl flex flex-col animate-in slide-in-from-left duration-300">
+          {/* Menu Deslizante */}
+          {/* Mudança 2: h-[100dvh] aqui também */}
+          <div className="relative w-72 bg-white h-[100dvh] shadow-2xl flex flex-col animate-in slide-in-from-left duration-300">
             <button 
               onClick={() => setIsMobileMenuOpen(false)}
-              className="absolute top-4 right-4 p-2 text-gray-400 hover:text-red-500 rounded-lg"
+              className="absolute top-4 right-4 p-2 text-gray-400 hover:text-red-500 rounded-lg z-50"
             >
               <X size={20} />
             </button>
-            <div className="h-full" onClick={() => setIsMobileMenuOpen(false)}>
-               <Sidebar />
+            {/* Removemos o onClick aqui para não fechar ao clicar no menu em si, apenas nos links */}
+            <div className="h-full flex flex-col">
+               <Sidebar mobile onClose={() => setIsMobileMenuOpen(false)} />
             </div>
           </div>
         </div>
