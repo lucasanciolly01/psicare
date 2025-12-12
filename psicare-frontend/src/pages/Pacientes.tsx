@@ -145,7 +145,7 @@ export function Pacientes() {
         }`}
       ></span>
       {status === "ativo"
-        ? "Em Acompanhamento"
+        ? "Acompanhamento"
         : status === "pausa"
         ? "Pausado"
         : "Inativo"}
