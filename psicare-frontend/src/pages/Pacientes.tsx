@@ -32,20 +32,18 @@ export function Pacientes() {
     null
   );
 
-  // 1. Estado Completo
   const [novoPaciente, setNovoPaciente] = useState({
     nome: "",
     email: "",
     telefone: "",
     dataNascimento: "",
-    status: "ativo" as Paciente["status"], // Tipagem correta
+    status: "ativo" as Paciente["status"],
     queixaPrincipal: "",
     historicoFamiliar: "",
     observacoesIniciais: "",
     anotacoes: "",
   });
 
-  // --- Lógica de Máscara de Telefone ---
   const mascaraTelefone = (valor: string) => {
     return valor
       .replace(/\D/g, "")
@@ -58,37 +56,41 @@ export function Pacientes() {
     setNovoPaciente({ ...novoPaciente, telefone: valorMascarado });
   };
 
-  // 2. Carregar dados para edição (CORREÇÃO DE DEPENDÊNCIAS AQUI)
   useEffect(() => {
     if (pacienteEmEdicao) {
-      const paciente = pacientes.find(p => p.id === pacienteEmEdicao);
+      const paciente = pacientes.find((p) => p.id === pacienteEmEdicao);
       if (paciente) {
-        // Bloco IF já estava corrigido
         setTimeout(() => {
           setNovoPaciente({
             nome: paciente.nome,
-            email: paciente.email || '',
+            email: paciente.email || "",
             telefone: paciente.telefone,
-            dataNascimento: paciente.dataNascimento || '',
+            dataNascimento: paciente.dataNascimento || "",
             status: paciente.status,
-            queixaPrincipal: paciente.queixaPrincipal || '',
-            historicoFamiliar: paciente.historicoFamiliar || '',
-            observacoesIniciais: paciente.observacoesIniciais || '',
-            anotacoes: paciente.anotacoes || ''
+            queixaPrincipal: paciente.queixaPrincipal || "",
+            historicoFamiliar: paciente.historicoFamiliar || "",
+            observacoesIniciais: paciente.observacoesIniciais || "",
+            anotacoes: paciente.anotacoes || "",
           });
           setIsCadastroOpen(true);
         }, 0);
       }
     } else {
-      // CORREÇÃO AQUI: Adicionado setTimeout no ELSE também
       setTimeout(() => {
-        setNovoPaciente({ 
-          nome: '', email: '', telefone: '', dataNascimento: '', status: 'ativo',
-          queixaPrincipal: '', historicoFamiliar: '', observacoesIniciais: '', anotacoes: ''
+        setNovoPaciente({
+          nome: "",
+          email: "",
+          telefone: "",
+          dataNascimento: "",
+          status: "ativo",
+          queixaPrincipal: "",
+          historicoFamiliar: "",
+          observacoesIniciais: "",
+          anotacoes: "",
         });
       }, 0);
     }
-  }, [pacienteEmEdicao, pacientes]); // <--- Dependências corrigidas
+  }, [pacienteEmEdicao, pacientes]);
 
   const handleCadastro = (e: React.FormEvent) => {
     e.preventDefault();
@@ -122,8 +124,37 @@ export function Pacientes() {
     return matchNome && matchStatus;
   });
 
+  // Componente Auxiliar para Status (DRY - Don't Repeat Yourself)
+  const StatusBadge = ({ status }: { status: string }) => (
+    <span
+      className={`px-3 py-1 rounded-full text-xs font-medium inline-flex items-center gap-1.5
+      ${
+        status === "ativo"
+          ? "bg-green-100 text-green-700"
+          : status === "pausa"
+          ? "bg-yellow-100 text-yellow-700"
+          : "bg-gray-100 text-gray-700"
+      }`}
+    >
+      <span
+        className={`w-1.5 h-1.5 rounded-full ${
+          status === "ativo"
+            ? "bg-green-500"
+            : status === "pausa"
+            ? "bg-yellow-500"
+            : "bg-gray-500"
+        }`}
+      ></span>
+      {status === "ativo"
+        ? "Em Acompanhamento"
+        : status === "pausa"
+        ? "Pausado"
+        : "Inativo"}
+    </span>
+  );
+
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 pb-24 md:pb-0">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold text-gray-800">Pacientes</h1>
@@ -131,14 +162,16 @@ export function Pacientes() {
             Gerencie seus pacientes e prontuários
           </p>
         </div>
+        {/* Botão Full Width no Mobile */}
         <button
           onClick={() => setIsCadastroOpen(true)}
-          className="bg-primary hover:bg-green-700 text-white px-5 py-2.5 rounded-xl font-medium flex items-center gap-2 shadow-lg shadow-green-200 transition-all active:scale-95"
+          className="w-full md:w-auto bg-primary hover:bg-green-700 text-white px-5 py-3 rounded-xl font-medium flex items-center justify-center gap-2 shadow-lg shadow-green-200 transition-all active:scale-95"
         >
           <Plus size={20} /> Novo Paciente
         </button>
       </div>
 
+      {/* Busca e Filtro Empilhados no Mobile */}
       <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-100 flex flex-col md:flex-row gap-4">
         <div className="flex-1 relative">
           <Search
@@ -148,13 +181,13 @@ export function Pacientes() {
           <input
             type="text"
             placeholder="Buscar por nome..."
-            className="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all"
+            className="w-full pl-10 pr-4 py-3 md:py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all text-base"
             value={termoBusca}
             onChange={(e) => setTermoBusca(e.target.value)}
           />
         </div>
         <select
-          className="border border-gray-200 rounded-lg px-4 py-2 outline-none focus:ring-2 focus:ring-primary/20 bg-white min-w-[150px]"
+          className="w-full md:w-auto border border-gray-200 rounded-lg px-4 py-3 md:py-2 outline-none focus:ring-2 focus:ring-primary/20 bg-white min-w-[150px] text-base"
           value={filtroStatus}
           onChange={(e) => setFiltroStatus(e.target.value)}
         >
@@ -166,7 +199,70 @@ export function Pacientes() {
       </div>
 
       <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
-        <div className="overflow-x-auto">
+        
+        {/* === VISÃO MOBILE (Cards) === */}
+        <div className="block md:hidden divide-y divide-gray-100">
+          {pacientesFiltrados.map((paciente) => (
+            <div key={paciente.id} className="p-4 flex flex-col gap-3">
+              <div className="flex justify-between items-start">
+                <div className="flex items-center gap-3">
+                  <div className="w-12 h-12 rounded-full bg-green-100 text-primary flex items-center justify-center font-bold text-lg">
+                    {paciente.nome.substring(0, 2).toUpperCase()}
+                  </div>
+                  <div>
+                    <h3 className="font-bold text-gray-900">{paciente.nome}</h3>
+                    <div className="mt-1">
+                        <StatusBadge status={paciente.status} />
+                    </div>
+                  </div>
+                </div>
+                {/* Ações simplificadas no topo do card */}
+                <div className="flex gap-1">
+                  <button
+                    onClick={() => setPacienteVisualizar(paciente)}
+                    className="p-2 text-gray-400 hover:text-primary bg-gray-50 rounded-lg border border-gray-100"
+                  >
+                    <Eye size={18} />
+                  </button>
+                  <button
+                    onClick={() => setPacienteEmEdicao(paciente.id)}
+                    className="p-2 text-gray-400 hover:text-blue-500 bg-gray-50 rounded-lg border border-gray-100"
+                  >
+                    <Edit size={18} />
+                  </button>
+                  <button
+                    onClick={() => setPacienteParaDeletar(paciente.id)}
+                    className="p-2 text-gray-400 hover:text-red-500 bg-gray-50 rounded-lg border border-gray-100"
+                  >
+                    <Trash2 size={18} />
+                  </button>
+                </div>
+              </div>
+
+              <div className="bg-gray-50 p-3 rounded-lg text-sm space-y-2 text-gray-600 border border-gray-100">
+                <div className="flex items-center gap-2">
+                  <Phone size={14} className="text-gray-400" />
+                  {paciente.telefone}
+                </div>
+                {paciente.email && (
+                  <div className="flex items-center gap-2">
+                    <Mail size={14} className="text-gray-400" />
+                    {paciente.email}
+                  </div>
+                )}
+                <div className="flex items-center gap-2 border-t border-gray-200 pt-2 mt-1">
+                  <FileText size={14} className="text-gray-400" />
+                  {paciente.queixaPrincipal
+                    ? "Prontuário Iniciado"
+                    : "Sem Prontuário"}
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+
+        {/* === VISÃO DESKTOP (Tabela Original) === */}
+        <div className="hidden md:block overflow-x-auto">
           <table className="w-full text-left border-collapse">
             <thead>
               <tr className="bg-gray-50 border-b border-gray-100 text-xs uppercase text-gray-500 font-semibold tracking-wider">
@@ -216,33 +312,7 @@ export function Pacientes() {
                     </div>
                   </td>
                   <td className="px-6 py-4">
-                    <span
-                      className={`px-3 py-1 rounded-full text-xs font-medium inline-flex items-center gap-1.5
-                      ${
-                        paciente.status === "ativo"
-                          ? "bg-green-100 text-green-700"
-                          : paciente.status === "pausa"
-                          ? "bg-yellow-100 text-yellow-700"
-                          : "bg-gray-100 text-gray-700"
-                      }
-                    `}
-                    >
-                      <span
-                        className={`w-1.5 h-1.5 rounded-full ${
-                          paciente.status === "ativo"
-                            ? "bg-green-500"
-                            : paciente.status === "pausa"
-                            ? "bg-yellow-500"
-                            : "bg-gray-500"
-                        }
-                      `}
-                      ></span>
-                      {paciente.status === "ativo"
-                        ? "Em Acompanhamento"
-                        : paciente.status === "pausa"
-                        ? "Pausado"
-                        : "Inativo"}
-                    </span>
+                    <StatusBadge status={paciente.status} />
                   </td>
                   <td className="px-6 py-4 text-right">
                     <div className="flex justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
@@ -274,6 +344,7 @@ export function Pacientes() {
             </tbody>
           </table>
         </div>
+
         {pacientesFiltrados.length === 0 && (
           <div className="py-12 text-center text-gray-400 flex flex-col items-center">
             <User size={48} className="opacity-20 mb-3" />
@@ -282,6 +353,7 @@ export function Pacientes() {
         )}
       </div>
 
+      {/* Modal de Cadastro (Reutilizado com ajustes de estilo) */}
       <Modal
         isOpen={isCadastroOpen}
         onClose={fecharModalCadastro}

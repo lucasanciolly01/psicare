@@ -14,8 +14,6 @@ export function Modal({ isOpen, onClose, title, children, size = 'md' }: ModalPr
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
-    // CORREÇÃO: setTimeout(..., 0) move a atualização para o final da fila de eventos
-    // evitando o erro "setState synchronously within an effect"
     const timer = setTimeout(() => setMounted(true), 0);
     return () => {
       setMounted(false);
@@ -47,6 +45,7 @@ export function Modal({ isOpen, onClose, title, children, size = 'md' }: ModalPr
   };
 
   return createPortal(
+    // Adicionado padding no container (p-4) para afastar das bordas no mobile
     <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fade-in">
       <div className="absolute inset-0" onClick={onClose} />
       <div 

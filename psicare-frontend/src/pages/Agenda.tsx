@@ -31,8 +31,6 @@ export function Agenda() {
 
   const pacientesAtivos = pacientes.filter(p => p.status === 'ativo');
 
-  // A FUNÇÃO verificarConflito LOCAL FOI REMOVIDA DAQUI
-
   // --- FUNÇÃO DE SALVAR COM AS VALIDAÇÕES ---
   const handleSaveAppointment = (e: React.FormEvent) => {
     e.preventDefault();
@@ -58,7 +56,6 @@ export function Agenda() {
     const dataSelecionadaStr = selectedDate.toISOString().split('T')[0];
 
     // REGRA 2: Bloquear Conflito de 50min
-    // ATENÇÃO: Passamos 'agendamentos' como primeiro argumento agora
     if (verificarConflito(agendamentos, dataSelecionadaStr, novoAgendamento.hora)) {
       setErroConflito("Conflito! É necessário intervalo de 50min entre sessões.");
       return;
@@ -90,7 +87,7 @@ export function Agenda() {
   ).sort((a,b) => a.hora.localeCompare(b.hora));
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 pb-24 lg:pb-0"> {/* Padding bottom para mobile */}
       
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
@@ -99,26 +96,28 @@ export function Agenda() {
         </div>
       </div>
 
-      <div className="flex flex-col lg:flex-row gap-8 h-[calc(100vh-180px)]">
+      {/* CORREÇÃO RESPONSIVA: Altura automática no mobile, fixa no desktop */}
+      <div className="flex flex-col lg:flex-row gap-8 h-auto lg:h-[calc(100vh-180px)]">
         
         {/* --- COLUNA ESQUERDA: CALENDÁRIO --- */}
-        <div className="flex-1 bg-white rounded-xl shadow-sm border border-gray-200 flex flex-col">
-            <div className="p-6 flex items-center justify-between border-b border-gray-100">
-              <h2 className="text-xl font-bold text-gray-800 capitalize flex items-center gap-2">
+        <div className="flex-1 bg-white rounded-xl shadow-sm border border-gray-200 flex flex-col min-h-[420px]">
+            {/* Header Calendário */}
+            <div className="p-5 flex items-center justify-between border-b border-gray-100">
+              <h2 className="text-lg font-bold text-gray-800 capitalize flex items-center gap-2">
                 <CalendarIcon size={20} className="text-primary"/>
                 {formatMonthYear()}
               </h2>
               <div className="flex items-center gap-1 bg-gray-50 p-1 rounded-lg border border-gray-100">
-                <button onClick={prevMonth} className="p-1.5 hover:bg-white hover:shadow-sm rounded-md text-gray-600 transition-all"><ChevronLeft size={18} /></button>
-                <button onClick={goToToday} className="text-xs font-bold text-gray-600 hover:bg-white hover:shadow-sm px-3 py-1.5 rounded-md transition-all mx-1 uppercase tracking-wide">Hoje</button>
-                <button onClick={nextMonth} className="p-1.5 hover:bg-white hover:shadow-sm rounded-md text-gray-600 transition-all"><ChevronRight size={18} /></button>
+                <button onClick={prevMonth} className="p-2 hover:bg-white hover:shadow-sm rounded-md text-gray-600 transition-all"><ChevronLeft size={20} /></button>
+                <button onClick={goToToday} className="text-xs font-bold text-gray-600 hover:bg-white hover:shadow-sm px-3 py-1.5 rounded-md uppercase tracking-wide">Hoje</button>
+                <button onClick={nextMonth} className="p-2 hover:bg-white hover:shadow-sm rounded-md text-gray-600 transition-all"><ChevronRight size={20} /></button>
               </div>
             </div>
 
             <div className="grid grid-cols-7 border-b border-gray-100 bg-gray-50/50">
               {days.slice(0, 7).map(day => (
-                <div key={day.toString()} className="py-3 text-center text-[10px] font-bold text-gray-400 uppercase tracking-wider">
-                  {formatWeekDay(day)}
+                <div key={day.toString()} className="py-3 text-center text-[10px] md:text-xs font-bold text-gray-400 uppercase tracking-wider">
+                  {formatWeekDay(day).substring(0, 3)}
                 </div>
               ))}
             </div>
@@ -134,9 +133,10 @@ export function Agenda() {
                   <div 
                     key={day.toString()} 
                     onClick={() => setSelectedDate(day)} 
+                    // Aumentar área de toque no mobile (min-h)
                     className={`
-                      relative border-b border-r border-gray-50 p-2 cursor-pointer transition-all duration-200
-                      ${!isCurrentMonth ? 'bg-gray-50/30 text-gray-300' : 'bg-white hover:bg-green-50/30'}
+                      relative border-b border-r border-gray-50 p-1 md:p-2 cursor-pointer transition-all duration-200 min-h-[60px] md:min-h-0
+                      ${!isCurrentMonth ? 'bg-gray-50/30 text-gray-300' : 'bg-white active:bg-green-50'}
                       ${isSelected ? '!bg-green-50 ring-2 ring-inset ring-primary z-10' : ''}
                     `}
                   >
@@ -160,8 +160,9 @@ export function Agenda() {
         </div>
 
         {/* --- COLUNA DIREITA: LISTA DE AGENDAMENTOS --- */}
-        <div className="w-full lg:w-96 bg-white rounded-xl shadow-sm border border-gray-200 flex flex-col">
-          <div className="p-6 border-b border-gray-100 flex justify-between items-center bg-gray-50/30">
+        {/* Largura total no mobile, fixa no desktop. Scroll interno apenas no desktop. */}
+        <div className="w-full lg:w-96 bg-white rounded-xl shadow-sm border border-gray-200 flex flex-col h-auto lg:h-full min-h-[300px]">
+          <div className="p-5 border-b border-gray-100 flex justify-between items-center bg-gray-50/30">
             <div>
               <h3 className="text-base font-bold text-gray-800">Agendamentos</h3>
               <p className="text-xs text-gray-500 capitalize mt-1">
@@ -176,7 +177,7 @@ export function Agenda() {
             </button>
           </div>
 
-          <div className="flex-1 overflow-y-auto p-4 space-y-3 custom-scrollbar">
+          <div className="flex-1 lg:overflow-y-auto p-4 space-y-3 custom-scrollbar">
             {agendamentosDoDia.length === 0 ? (
               <div className="h-full flex flex-col items-center justify-center text-gray-300 text-center p-8 border-2 border-dashed border-gray-100 rounded-xl m-2">
                 <Clock size={40} className="mb-3 opacity-20" />
@@ -203,9 +204,10 @@ export function Agenda() {
                       </span>
                     </div>
                   </div>
+                  {/* Botão sempre visível no mobile, hover no desktop */}
                   <button 
                     onClick={() => removerAgendamento(agendamento.id)}
-                    className="self-start text-gray-300 hover:text-red-500 hover:bg-red-50 p-1.5 rounded-lg transition-all opacity-0 group-hover:opacity-100"
+                    className="self-start text-gray-300 hover:text-red-500 hover:bg-red-50 p-1.5 rounded-lg transition-all lg:opacity-0 lg:group-hover:opacity-100"
                     title="Cancelar agendamento"
                   >
                     <Trash2 size={16} />
