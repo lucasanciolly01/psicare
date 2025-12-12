@@ -187,13 +187,23 @@ export function Agenda() {
               return (
                 <div
                   key={day.toString()}
-                  onClick={() => setSelectedDate(day)}
+                  onClick={() => {
+                    setSelectedDate(day);
+                    // LÓGICA NOVA: Redirecionar se clicar fora do mês atual
+                    if (!isCurrentMonth) {
+                      if (day < currentDate) {
+                        prevMonth();
+                      } else {
+                        nextMonth();
+                      }
+                    }
+                  }}
                   className={`
                       relative border-b border-r border-gray-50 p-1 cursor-pointer transition-all duration-200
                       flex flex-col items-center justify-center
                       ${
                         !isCurrentMonth
-                          ? "bg-gray-50/30 text-gray-300"
+                          ? "bg-gray-50/30 text-gray-300 opacity-30" // LÓGICA NOVA: Adicionado opacity-30
                           : "bg-white active:bg-green-50"
                       }
                       ${
@@ -304,7 +314,6 @@ export function Agenda() {
           </div>
         </div>
 
-        {/* --- MODAL DE AGENDAMENTO (Mobile Corrigido) --- */}
         {/* --- MODAL RESPONSIVO UNIVERSAL --- */}
         <Modal
           isOpen={isModalOpen}
@@ -313,7 +322,7 @@ export function Agenda() {
           size="md"
         >
           <form onSubmit={handleSaveAppointment} className="space-y-6">
-            {/* Card de Data: Flex-wrap para evitar quebra em telas muito pequenas (iPhone SE/Galaxy Fold) */}
+            {/* Card de Data */}
             <div className="bg-green-50 p-4 rounded-xl border border-green-100 flex flex-wrap items-center gap-3">
               <div className="p-2 bg-white rounded-lg text-primary shadow-sm">
                 <CalendarIcon size={20} />
@@ -350,8 +359,6 @@ export function Agenda() {
                   />
                   <select
                     required
-                    // h-12 (48px) para área de toque confortável
-                    // text-base para evitar zoom no iOS
                     className="w-full pl-10 pr-10 h-12 border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all bg-white appearance-none text-gray-800 text-base"
                     value={novoAgendamento.pacienteId}
                     onChange={(e) =>
@@ -378,7 +385,6 @@ export function Agenda() {
                 </div>
               </div>
 
-              {/* Grid responsivo: Coluna única no mobile, duas no desktop */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-bold text-gray-700 mb-1.5">
@@ -392,10 +398,6 @@ export function Agenda() {
                     <input
                       type="time"
                       required
-                      // CORREÇÃO CRÍTICA:
-                      // - text-gray-900 e bg-white forçados
-                      // - appearance-none para remover estilos nativos estranhos
-                      // - h-12 para área de toque
                       className={`w-full pl-10 pr-3 h-12 border rounded-xl focus:ring-2 outline-none transition-all text-base bg-white text-gray-900 appearance-none ${
                         erroConflito
                           ? "border-red-300 focus:ring-red-200 focus:border-red-500 bg-red-50"
@@ -445,7 +447,6 @@ export function Agenda() {
               </div>
             </div>
 
-            {/* Botões: Coluna reversa no mobile (Confirmar em cima é mais ergonômico ou abaixo, aqui usamos padrão de formulário: Ação principal à direita/baixo) */}
             <div className="pt-4 flex flex-col-reverse md:flex-row gap-3 border-t border-gray-50 mt-2">
               <button
                 type="button"
