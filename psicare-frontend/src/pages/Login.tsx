@@ -50,7 +50,7 @@ export function Login() {
             <div className="space-y-1.5">
               <div className="flex justify-between items-center ml-1">
                 <label className="text-sm font-bold text-gray-700">Senha</label>
-                <Link to="/recuperar-senha" className="text-sm text-primary font-bold hover:underline">Esqueceu?</Link>
+                <Link to="/recuperar-senha" className="text-sm text-primary font-bold hover:underline">Esqueceu a senha?</Link>
               </div>
               <div className="relative">
                 <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" size={20} />
