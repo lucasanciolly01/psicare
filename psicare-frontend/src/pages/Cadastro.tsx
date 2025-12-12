@@ -6,7 +6,6 @@ import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
 
-// Schema de validação (Mantido igual)
 const cadastroSchema = z.object({
   nome: z.string().min(3, 'O nome deve ter pelo menos 3 caracteres'),
   email: z.string().email('Formato de e-mail inválido'),
@@ -48,87 +47,80 @@ export function Cadastro() {
   };
 
   return (
-    // MUDANÇA 1: min-h-[100dvh] para altura real no mobile
-    // MUDANÇA 2: pb-24 para criar o espaço de segurança no rodapé (contra a barra do Safari)
-    // MUDANÇA 3: overflow-y-auto para garantir rolagem em telas pequenas
-    <div className="min-h-[100dvh] flex items-center justify-center bg-gray-50 p-4 overflow-y-auto pb-24">
-      <div className="bg-white p-8 rounded-2xl shadow-xl w-full max-w-md border border-gray-100">
-        <div className="text-center mb-6">
-          <h1 className="text-2xl font-bold text-gray-800">Crie sua conta</h1>
-          <p className="text-gray-500 text-sm">Comece a gerenciar sua clínica hoje.</p>
+    // MUDANÇA: min-h-[100dvh] + pb-40 para garantir que o rodapé "flutue" alto
+    <div className="min-h-[100dvh] w-full flex items-center justify-center bg-gray-50 p-4 py-12 pb-40">
+      <div className="bg-white p-8 rounded-3xl shadow-xl w-full max-w-md border border-gray-100">
+        <div className="text-center mb-8">
+          <h1 className="text-3xl font-bold text-gray-800 mb-2">Crie sua conta</h1>
+          <p className="text-gray-500">Comece a gerenciar sua clínica hoje.</p>
         </div>
 
-        <form onSubmit={handleSubmit(handleCadastro)} className="space-y-4">
+        <form onSubmit={handleSubmit(handleCadastro)} className="space-y-5">
           
-          {/* Campo Nome */}
           <div className="relative">
-            <User className="absolute left-3 top-3 text-gray-400" size={18} />
+            <User className="absolute left-4 top-3.5 text-gray-400" size={20} />
             <input 
               type="text" 
               placeholder="Nome Completo"
-              className={`w-full pl-10 pr-4 py-2 border rounded-lg outline-none transition-all ${errors.nome ? 'border-red-500 focus:ring-red-200' : 'border-gray-300 focus:border-primary focus:ring-2 focus:ring-primary/20'}`}
+              className={`w-full pl-12 pr-4 py-3.5 border rounded-xl outline-none transition-all ${errors.nome ? 'border-red-500 focus:ring-red-200' : 'border-gray-200 focus:border-primary focus:ring-2 focus:ring-primary/20'}`}
               {...register('nome')}
             />
-            {errors.nome && <span className="text-xs text-red-500 ml-1">{errors.nome.message}</span>}
+            {errors.nome && <span className="text-xs text-red-500 ml-1 mt-1 block">{errors.nome.message}</span>}
           </div>
 
-          {/* Campo Email */}
           <div className="relative">
-            <Mail className="absolute left-3 top-3 text-gray-400" size={18} />
+            <Mail className="absolute left-4 top-3.5 text-gray-400" size={20} />
             <input 
               type="email" 
               placeholder="E-mail profissional"
-              className={`w-full pl-10 pr-4 py-2 border rounded-lg outline-none transition-all ${errors.email ? 'border-red-500 focus:ring-red-200' : 'border-gray-300 focus:border-primary focus:ring-2 focus:ring-primary/20'}`}
+              className={`w-full pl-12 pr-4 py-3.5 border rounded-xl outline-none transition-all ${errors.email ? 'border-red-500 focus:ring-red-200' : 'border-gray-200 focus:border-primary focus:ring-2 focus:ring-primary/20'}`}
               {...register('email')}
             />
-            {errors.email && <span className="text-xs text-red-500 ml-1">{errors.email.message}</span>}
+            {errors.email && <span className="text-xs text-red-500 ml-1 mt-1 block">{errors.email.message}</span>}
           </div>
 
-          {/* Campo Senha */}
           <div className="relative">
-            <Lock className="absolute left-3 top-3 text-gray-400" size={18} />
+            <Lock className="absolute left-4 top-3.5 text-gray-400" size={20} />
             <input 
               type="password" 
               placeholder="Senha"
-              className={`w-full pl-10 pr-4 py-2 border rounded-lg outline-none transition-all ${errors.senha ? 'border-red-500 focus:ring-red-200' : 'border-gray-300 focus:border-primary focus:ring-2 focus:ring-primary/20'}`}
+              className={`w-full pl-12 pr-4 py-3.5 border rounded-xl outline-none transition-all ${errors.senha ? 'border-red-500 focus:ring-red-200' : 'border-gray-200 focus:border-primary focus:ring-2 focus:ring-primary/20'}`}
               {...register('senha')}
             />
-            {errors.senha && <span className="text-xs text-red-500 ml-1">{errors.senha.message}</span>}
+            {errors.senha && <span className="text-xs text-red-500 ml-1 mt-1 block">{errors.senha.message}</span>}
           </div>
 
-          {/* Campo Confirmação */}
           <div className="relative">
-            <Lock className="absolute left-3 top-3 text-gray-400" size={18} />
+            <Lock className="absolute left-4 top-3.5 text-gray-400" size={20} />
             <input 
               type="password" 
               placeholder="Confirme a senha"
-              className={`w-full pl-10 pr-4 py-2 border rounded-lg outline-none transition-all ${errors.confirmacao ? 'border-red-500 focus:ring-red-200' : 'border-gray-300 focus:border-primary focus:ring-2 focus:ring-primary/20'}`}
+              className={`w-full pl-12 pr-4 py-3.5 border rounded-xl outline-none transition-all ${errors.confirmacao ? 'border-red-500 focus:ring-red-200' : 'border-gray-200 focus:border-primary focus:ring-2 focus:ring-primary/20'}`}
               {...register('confirmacao')}
             />
-            {errors.confirmacao && <span className="text-xs text-red-500 ml-1">{errors.confirmacao.message}</span>}
+            {errors.confirmacao && <span className="text-xs text-red-500 ml-1 mt-1 block">{errors.confirmacao.message}</span>}
           </div>
 
-          {/* Campo Termos */}
-          <div className="flex flex-col gap-1">
-            <div className="flex items-start gap-2">
+          <div className="flex flex-col gap-2 pt-2">
+            <div className="flex items-start gap-3">
               <input 
                 type="checkbox" id="termos" 
-                className="mt-1 rounded text-primary focus:ring-primary"
+                className="mt-1 w-4 h-4 rounded text-primary focus:ring-primary border-gray-300"
                 {...register('termos')}
               />
-              <label htmlFor="termos" className="text-xs text-gray-600 cursor-pointer">
-                Li e aceito os <Link to="#" className="text-primary hover:underline">Termos de Uso</Link> e a <Link to="#" className="text-primary hover:underline">Política de Privacidade</Link>.
+              <label htmlFor="termos" className="text-xs text-gray-600 cursor-pointer leading-relaxed">
+                Li e aceito os <Link to="#" className="text-primary hover:underline font-bold">Termos de Uso</Link> e a <Link to="#" className="text-primary hover:underline font-bold">Política de Privacidade</Link>.
               </label>
             </div>
             {errors.termos && <span className="text-xs text-red-500 ml-1">{errors.termos.message}</span>}
           </div>
 
-          <button type="submit" disabled={isSubmitting} className="w-full bg-primary hover:bg-green-700 disabled:bg-gray-400 text-white py-2.5 rounded-lg font-medium transition-all shadow-md hover:shadow-lg">
+          <button type="submit" disabled={isSubmitting} className="w-full bg-primary hover:bg-green-700 disabled:bg-gray-400 text-white py-4 rounded-xl font-bold transition-all shadow-md hover:shadow-lg active:scale-95 text-base">
             {isSubmitting ? 'Criando conta...' : 'Criar Conta'}
           </button>
         </form>
-        <div className="mt-6 text-center text-sm text-gray-600">
-          Já tem conta? <Link to="/login" className="text-primary font-bold hover:underline">Entrar</Link>
+        <div className="mt-8 text-center text-sm text-gray-600">
+          Já tem conta? <Link to="/login" className="text-primary font-bold hover:underline ml-1">Entrar</Link>
         </div>
       </div>
     </div>

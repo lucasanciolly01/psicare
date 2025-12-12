@@ -19,31 +19,28 @@ export function Login() {
   };
 
   return (
-    // MUDANÇA 1: Usar min-h-[100dvh] para respeitar a altura real do mobile
-    <div className="min-h-[100dvh] w-full flex">
+    // Container Principal: min-h-screen permite que o conteúdo cresça se necessário
+    <div className="min-h-[100dvh] w-full flex bg-white lg:bg-gray-50">
       
       {/* Lado Esquerdo - Formulário */}
-      {/* MUDANÇA 2: overflow-y-auto para garantir rolagem em telas muito pequenas */}
-      <div className="w-full lg:w-1/2 flex items-center justify-center p-8 bg-white overflow-y-auto">
-        
-        {/* MUDANÇA 3: Adicionado 'pb-24 lg:pb-0'. 
-            Isso cria um colchão de segurança no rodapé em mobile, 
-            empurrando o texto para cima da barra do Safari/Chrome. */}
-        <div className="max-w-md w-full pb-24 lg:pb-0">
-          <div className="mb-8">
-            <h1 className="text-3xl font-bold text-primary mb-2">💚 PsiCare</h1>
-            <h2 className="text-2xl font-bold text-gray-800">Bem-vindo de volta!</h2>
+      {/* MUDANÇA 1: justify-center para centralizar verticalmente, mas 'py-12' para dar ar */}
+      {/* MUDANÇA 2: 'pb-40' no mobile. Isso é uma margem de segurança gigante contra a barra do Safari */}
+      <div className="w-full lg:w-1/2 flex flex-col justify-center px-6 py-12 lg:p-16 bg-white pb-40 lg:pb-12">
+        <div className="w-full max-w-md mx-auto">
+          <div className="mb-10">
+            <h1 className="text-3xl font-bold text-primary mb-3">💚 PsiCare</h1>
+            <h2 className="text-2xl font-bold text-gray-900">Bem-vindo de volta!</h2>
             <p className="text-gray-500 mt-2">Insira seus dados para acessar sua conta.</p>
           </div>
 
-          <form onSubmit={handleSubmit} className="space-y-5">
-            <div className="space-y-1.5">
-              <label className="text-sm font-semibold text-gray-700">E-mail</label>
+          <form onSubmit={handleSubmit} className="space-y-6">
+            <div className="space-y-2">
+              <label className="text-sm font-bold text-gray-700">E-mail</label>
               <div className="relative">
-                <Mail className="absolute left-3 top-3.5 text-gray-400" size={20} />
+                <Mail className="absolute left-4 top-3.5 text-gray-400" size={20} />
                 <input 
                   type="email" 
-                  className="w-full pl-10 pr-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all bg-gray-50 focus:bg-white"
+                  className="w-full pl-12 pr-4 py-3.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all bg-gray-50 focus:bg-white text-gray-800"
                   placeholder="seu@email.com"
                   value={email}
                   onChange={e => setEmail(e.target.value)}
@@ -52,16 +49,16 @@ export function Login() {
               </div>
             </div>
 
-            <div className="space-y-1.5">
+            <div className="space-y-2">
               <div className="flex justify-between items-center">
-                <label className="text-sm font-semibold text-gray-700">Senha</label>
-                <Link to="/recuperar-senha" className="text-sm text-primary font-medium hover:underline">Esqueceu a senha?</Link>
+                <label className="text-sm font-bold text-gray-700">Senha</label>
+                <Link to="/recuperar-senha" className="text-sm text-primary font-bold hover:underline">Esqueceu a senha?</Link>
               </div>
               <div className="relative">
-                <Lock className="absolute left-3 top-3.5 text-gray-400" size={20} />
+                <Lock className="absolute left-4 top-3.5 text-gray-400" size={20} />
                 <input 
                   type="password" 
-                  className="w-full pl-10 pr-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all bg-gray-50 focus:bg-white"
+                  className="w-full pl-12 pr-4 py-3.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all bg-gray-50 focus:bg-white text-gray-800"
                   placeholder="••••••••"
                   value={password}
                   onChange={e => setPassword(e.target.value)}
@@ -70,18 +67,18 @@ export function Login() {
               </div>
             </div>
 
-            <button type="submit" className="w-full bg-primary hover:bg-green-700 text-white py-3.5 rounded-xl font-bold shadow-lg shadow-green-200 transition-all flex items-center justify-center gap-2 hover:-translate-y-0.5">
+            <button type="submit" className="w-full bg-primary hover:bg-green-700 text-white py-4 rounded-xl font-bold shadow-lg shadow-green-200 transition-all flex items-center justify-center gap-2 active:scale-95 text-base mt-2">
               Entrar na Plataforma <ArrowRight size={20} />
             </button>
           </form>
 
-          <p className="mt-8 text-center text-sm text-gray-500">
+          <p className="mt-10 text-center text-sm text-gray-500">
             Não tem uma conta? <Link to="/cadastro" className="text-primary font-bold hover:underline">Cadastre-se gratuitamente</Link>
           </p>
         </div>
       </div>
 
-      {/* Lado Direito - Imagem/Banner (Mantido igual) */}
+      {/* Lado Direito - Imagem (Mantido igual) */}
       <div className="hidden lg:flex w-1/2 bg-gradient-to-br from-green-50 to-green-100 items-center justify-center relative overflow-hidden">
         <div className="absolute inset-0 bg-primary/10 backdrop-blur-sm z-10"></div>
         <img 
@@ -89,9 +86,9 @@ export function Login() {
           alt="Consultório" 
           className="absolute inset-0 w-full h-full object-cover"
         />
-        <div className="relative z-20 p-12 text-white max-w-lg">
-          <h2 className="text-4xl font-bold mb-6 drop-shadow-md">Gerencie sua clínica com tranquilidade.</h2>
-          <p className="text-lg text-white/90 drop-shadow-md">
+        <div className="relative z-20 p-16 text-white max-w-xl">
+          <h2 className="text-5xl font-bold mb-6 drop-shadow-md leading-tight">Gerencie sua clínica com tranquilidade.</h2>
+          <p className="text-xl text-white/90 drop-shadow-md leading-relaxed">
             Organize pacientes, agendamentos e prontuários em um só lugar, de forma segura e eficiente.
           </p>
         </div>
