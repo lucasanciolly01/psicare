@@ -351,6 +351,7 @@ export function Pacientes() {
       </div>
 
       {/* --- MODAL DE CADASTRO CORRIGIDO --- */}
+{/* --- MODAL DE CADASTRO OTIMIZADO PARA TODOS OS SMARTPHONES --- */}
       <Modal
         isOpen={isCadastroOpen}
         onClose={fecharModalCadastro}
@@ -362,16 +363,18 @@ export function Pacientes() {
             <h4 className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-4 flex items-center gap-2">
               <User size={14} /> Dados Pessoais
             </h4>
+            
+            {/* GRID RESPONSIVO: Coluna única no mobile, duas colunas no desktop */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
               <div className="md:col-span-2">
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className="block text-sm font-medium text-gray-700 mb-1.5">
                   Nome Completo
                 </label>
                 <input
                   required
                   type="text"
-                  // Adicionado text-base para evitar zoom
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all text-base"
+                  // Altura de 48px (h-12) para toque fácil
+                  className="w-full px-4 h-12 border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all text-base"
                   placeholder="Ex: João da Silva"
                   value={novoPaciente.nome}
                   onChange={(e) =>
@@ -381,19 +384,19 @@ export function Pacientes() {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className="block text-sm font-medium text-gray-700 mb-1.5">
                   Telefone
                 </label>
                 <div className="relative">
                   <Phone
                     size={18}
-                    className="absolute left-3 top-3.5 text-gray-400"
+                    className="absolute left-3 top-3.5 text-gray-400 pointer-events-none"
                   />
                   <input
                     required
                     type="text"
                     maxLength={15}
-                    className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all text-base"
+                    className="w-full pl-10 pr-4 h-12 border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all text-base"
                     placeholder="(00) 00000-0000"
                     value={novoPaciente.telefone}
                     onChange={handleTelefoneChange}
@@ -402,16 +405,16 @@ export function Pacientes() {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className="block text-sm font-medium text-gray-700 mb-1.5">
                   Data de Nascimento
                 </label>
                 <div className="relative">
-                  {/* CORREÇÃO AQUI: Mudei o ícone para a esquerda (left-3) para evitar corte no texto à direita */}
+                  {/* ÍCONE NA ESQUERDA para evitar colisão com o texto da data no iOS */}
                   <CalendarIcon size={18} className="absolute left-3 top-3.5 text-gray-400 pointer-events-none" />
                   <input
                     type="date"
-                    // CORREÇÃO AQUI: pl-10 (padding left) para dar espaço ao ícone
-                    className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all text-gray-600 bg-white text-base"
+                    // Padding left ajustado para o ícone
+                    className="w-full pl-10 pr-4 h-12 border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all text-gray-600 bg-white text-base appearance-none"
                     value={novoPaciente.dataNascimento}
                     max={new Date().toISOString().split("T")[0]}
                     onChange={(e) =>
@@ -425,14 +428,14 @@ export function Pacientes() {
               </div>
 
               <div className="md:col-span-2">
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className="block text-sm font-medium text-gray-700 mb-1.5">
                   E-mail (Opcional)
                 </label>
                 <div className="relative">
-                    <Mail size={18} className="absolute left-3 top-3.5 text-gray-400" />
+                    <Mail size={18} className="absolute left-3 top-3.5 text-gray-400 pointer-events-none" />
                     <input
                     type="email"
-                    className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all text-base"
+                    className="w-full pl-10 pr-4 h-12 border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all text-base"
                     placeholder="paciente@email.com"
                     value={novoPaciente.email}
                     onChange={(e) =>
@@ -443,11 +446,11 @@ export function Pacientes() {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className="block text-sm font-medium text-gray-700 mb-1.5">
                   Status
                 </label>
                 <select
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none bg-white transition-all text-base"
+                  className="w-full px-4 h-12 border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none bg-white transition-all text-base"
                   value={novoPaciente.status}
                   onChange={(e) =>
                     setNovoPaciente({
@@ -475,7 +478,7 @@ export function Pacientes() {
                     Queixa Principal
                   </label>
                   <textarea
-                    className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none h-24 resize-none text-base transition-all"
+                    className="w-full p-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none h-24 resize-none text-base transition-all"
                     placeholder="Motivo da consulta..."
                     value={novoPaciente.queixaPrincipal}
                     onChange={(e) =>
@@ -491,7 +494,7 @@ export function Pacientes() {
                     Histórico Familiar
                   </label>
                   <textarea
-                    className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none h-24 resize-none text-base transition-all"
+                    className="w-full p-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none h-24 resize-none text-base transition-all"
                     placeholder="Histórico relevante..."
                     value={novoPaciente.historicoFamiliar}
                     onChange={(e) =>
@@ -510,7 +513,7 @@ export function Pacientes() {
                     Observações Iniciais
                   </label>
                   <textarea
-                    className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none h-20 resize-none text-base transition-all"
+                    className="w-full p-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none h-20 resize-none text-base transition-all"
                     placeholder="Observações gerais..."
                     value={novoPaciente.observacoesIniciais}
                     onChange={(e) =>
@@ -526,7 +529,7 @@ export function Pacientes() {
                     Anotações Privadas
                   </label>
                   <textarea
-                    className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none h-20 resize-none text-base transition-all bg-yellow-50/50"
+                    className="w-full p-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none h-20 resize-none text-base transition-all bg-yellow-50/50"
                     placeholder="Anotações administrativas..."
                     value={novoPaciente.anotacoes}
                     onChange={(e) =>
@@ -545,13 +548,13 @@ export function Pacientes() {
             <button
               type="button"
               onClick={fecharModalCadastro}
-              className="flex-1 py-3 border border-gray-300 text-gray-700 rounded-lg font-medium hover:bg-gray-50 transition-colors"
+              className="flex-1 py-3.5 border border-gray-300 text-gray-700 rounded-xl font-bold hover:bg-gray-50 transition-colors"
             >
               Cancelar
             </button>
             <button
               type="submit"
-              className="flex-1 py-3 bg-primary text-white rounded-lg font-medium hover:bg-green-700 shadow-md transition-all hover:-translate-y-0.5"
+              className="flex-1 py-3.5 bg-primary text-white rounded-xl font-bold hover:bg-green-700 shadow-md transition-all hover:-translate-y-0.5"
             >
               {pacienteEmEdicao ? "Salvar Alterações" : "Cadastrar Paciente"}
             </button>
@@ -576,13 +579,13 @@ export function Pacientes() {
           <div className="flex gap-3">
             <button
               onClick={() => setPacienteParaDeletar(null)}
-              className="flex-1 py-3 border border-gray-300 rounded-lg text-gray-700 font-medium hover:bg-gray-50 transition-colors"
+              className="flex-1 py-3 border border-gray-300 rounded-xl text-gray-700 font-bold hover:bg-gray-50 transition-colors"
             >
               Cancelar
             </button>
             <button
               onClick={confirmarExclusao}
-              className="flex-1 py-3 bg-red-600 text-white rounded-lg font-medium hover:bg-red-700 shadow-lg shadow-red-200 transition-colors"
+              className="flex-1 py-3 bg-red-600 text-white rounded-xl font-bold hover:bg-red-700 shadow-lg shadow-red-200 transition-colors"
             >
               Sim, Excluir
             </button>
