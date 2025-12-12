@@ -1,12 +1,13 @@
 import { useState } from 'react';
 import { ChevronLeft, ChevronRight, Clock, Plus, Calendar as CalendarIcon, User, AlignLeft, Trash2, ChevronDown, AlertCircle } from 'lucide-react';
-import { useCalendar } from '../hooks/useCalendar';
-import { Modal } from '../components/ui/Modal';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
+
+// Imports internos (ajuste os caminhos conforme seu projeto)
+import { useCalendar } from '../hooks/useCalendar';
+import { Modal } from '../components/ui/Modal';
 import { useAgendamentos } from '../context/AgendamentosContext';
 import { usePacientes } from '../context/PacientesContext';
-// IMPORTAÇÃO DA NOVA FUNÇÃO UTILITÁRIA
 import { verificarConflito } from '../utils/agendamento';
 
 export function Agenda() {
@@ -38,10 +39,8 @@ export function Agenda() {
 
     if (!novoAgendamento.pacienteId || !novoAgendamento.hora) return;
 
-    // A. MONTA A DATA + HORA DO AGENDAMENTO PARA VERIFICAR PASSADO
+    // 1. Cria objeto Date para validar passado
     const [horasInput, minutosInput] = novoAgendamento.hora.split(':').map(Number);
-    
-    // Cria uma cópia da data selecionada no calendário
     const dataAgendamento = new Date(selectedDate);
     dataAgendamento.setHours(horasInput, minutosInput, 0, 0);
 
@@ -56,12 +55,13 @@ export function Agenda() {
     const dataSelecionadaStr = selectedDate.toISOString().split('T')[0];
 
     // REGRA 2: Bloquear Conflito de 50min
+    // Utiliza a função importada de utils/agendamento.ts
     if (verificarConflito(agendamentos, dataSelecionadaStr, novoAgendamento.hora)) {
-      setErroConflito("Conflito! É necessário intervalo de 50min entre sessões.");
+      setErroConflito("Conflito! Já existe um agendamento neste intervalo (50min).");
       return;
     }
 
-    // Se passou, salva!
+    // Se passou nas validações, salva
     const pacienteSelecionado = pacientes.find(p => p.id === novoAgendamento.pacienteId);
 
     if (pacienteSelecionado) {
@@ -82,12 +82,12 @@ export function Agenda() {
     setErroConflito(null);
   };
 
-  const agendamentosDoDia = agendamentos.filter(a => 
-    a.data === selectedDate.toISOString().split('T')[0]
-  ).sort((a,b) => a.hora.localeCompare(b.hora));
+  const agendamentosDoDia = agendamentos
+    .filter(a => a.data === selectedDate.toISOString().split('T')[0])
+    .sort((a,b) => a.hora.localeCompare(b.hora));
 
   return (
-    <div className="space-y-6 pb-24 lg:pb-0"> {/* Padding bottom para mobile */}
+    <div className="space-y-6 pb-24 lg:pb-0">
       
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
@@ -96,7 +96,6 @@ export function Agenda() {
         </div>
       </div>
 
-      {/* CORREÇÃO RESPONSIVA: Altura automática no mobile, fixa no desktop */}
       <div className="flex flex-col lg:flex-row gap-8 h-auto lg:h-[calc(100vh-180px)]">
         
         {/* --- COLUNA ESQUERDA: CALENDÁRIO --- */}
@@ -114,6 +113,7 @@ export function Agenda() {
               </div>
             </div>
 
+            {/* Cabeçalho dias da semana */}
             <div className="grid grid-cols-7 border-b border-gray-100 bg-gray-50/50">
               {days.slice(0, 7).map(day => (
                 <div key={day.toString()} className="py-3 text-center text-[10px] md:text-xs font-bold text-gray-400 uppercase tracking-wider">
@@ -122,6 +122,7 @@ export function Agenda() {
               ))}
             </div>
 
+            {/* Grid de dias */}
             <div className="grid grid-cols-7 flex-1 auto-rows-fr">
               {days.map(day => {
                 const isSelected = isSameDay(day, selectedDate);
@@ -133,7 +134,6 @@ export function Agenda() {
                   <div 
                     key={day.toString()} 
                     onClick={() => setSelectedDate(day)} 
-                    // Aumentar área de toque no mobile (min-h)
                     className={`
                       relative border-b border-r border-gray-50 p-1 md:p-2 cursor-pointer transition-all duration-200 min-h-[60px] md:min-h-0
                       ${!isCurrentMonth ? 'bg-gray-50/30 text-gray-300' : 'bg-white active:bg-green-50'}
@@ -160,7 +160,6 @@ export function Agenda() {
         </div>
 
         {/* --- COLUNA DIREITA: LISTA DE AGENDAMENTOS --- */}
-        {/* Largura total no mobile, fixa no desktop. Scroll interno apenas no desktop. */}
         <div className="w-full lg:w-96 bg-white rounded-xl shadow-sm border border-gray-200 flex flex-col h-auto lg:h-full min-h-[300px]">
           <div className="p-5 border-b border-gray-100 flex justify-between items-center bg-gray-50/30">
             <div>
@@ -204,7 +203,6 @@ export function Agenda() {
                       </span>
                     </div>
                   </div>
-                  {/* Botão sempre visível no mobile, hover no desktop */}
                   <button 
                     onClick={() => removerAgendamento(agendamento.id)}
                     className="self-start text-gray-300 hover:text-red-500 hover:bg-red-50 p-1.5 rounded-lg transition-all lg:opacity-0 lg:group-hover:opacity-100"

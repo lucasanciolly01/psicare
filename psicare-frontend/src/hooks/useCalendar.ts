@@ -21,6 +21,7 @@ export function useCalendar() {
   // Navegação
   const nextMonth = () => setCurrentDate(addMonths(currentDate, 1));
   const prevMonth = () => setCurrentDate(subMonths(currentDate, 1));
+  
   const goToToday = () => {
     const today = new Date();
     setCurrentDate(today);
@@ -31,8 +32,10 @@ export function useCalendar() {
   const generateDays = () => {
     const monthStart = startOfMonth(currentDate);
     const monthEnd = endOfMonth(monthStart);
-    const startDate = startOfWeek(monthStart);
-    const endDate = endOfWeek(monthEnd);
+    
+    // Importante: Passar locale para garantir alinhamento correto da semana
+    const startDate = startOfWeek(monthStart, { locale: ptBR });
+    const endDate = endOfWeek(monthEnd, { locale: ptBR });
 
     return eachDayOfInterval({
       start: startDate,
@@ -42,6 +45,8 @@ export function useCalendar() {
 
   // Formatadores
   const formatMonthYear = () => format(currentDate, 'MMMM yyyy', { locale: ptBR });
+  
+  // Formata dia da semana (ex: SEG, TER)
   const formatWeekDay = (date: Date) => format(date, 'EEE', { locale: ptBR });
 
   return {
