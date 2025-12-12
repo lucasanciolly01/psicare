@@ -3,11 +3,12 @@ import { ChevronLeft, ChevronRight, Clock, Plus, Calendar as CalendarIcon, User,
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 
+// Imports internos
 import { useCalendar } from '../hooks/useCalendar';
 import { Modal } from '../components/ui/Modal';
 import { useAgendamentos } from '../context/AgendamentosContext';
 import { usePacientes } from '../context/PacientesContext';
-import { useToast } from '../context/ToastContext'; // Integração Toast
+import { useToast } from '../context/ToastContext'; 
 import { verificarConflito } from '../utils/agendamento';
 
 export function Agenda() {
@@ -100,22 +101,22 @@ export function Agenda() {
       <div className="flex flex-col lg:flex-row gap-6 lg:h-[calc(100vh-180px)]">
         
         {/* --- CALENDÁRIO --- */}
-        <div className="flex-1 bg-white rounded-xl shadow-sm border border-gray-200 flex flex-col min-h-[420px] lg:min-h-0">
+        <div className="flex-1 bg-white rounded-xl shadow-sm border border-gray-200 flex flex-col h-[500px] lg:h-auto min-h-[420px]">
             {/* Header Calendário */}
-            <div className="p-4 md:p-5 flex items-center justify-between border-b border-gray-100">
+            <div className="p-4 md:p-5 flex items-center justify-between border-b border-gray-100 flex-shrink-0">
               <h2 className="text-base md:text-lg font-bold text-gray-800 capitalize flex items-center gap-2">
                 <CalendarIcon size={20} className="text-primary"/>
                 {formatMonthYear()}
               </h2>
               <div className="flex items-center gap-1 bg-gray-50 p-1 rounded-lg border border-gray-100">
-                <button onClick={prevMonth} className="p-1.5 md:p-2 hover:bg-white hover:shadow-sm rounded-md text-gray-600 transition-all"><ChevronLeft size={18} /></button>
+                <button onClick={prevMonth} className="p-2 hover:bg-white hover:shadow-sm rounded-md text-gray-600 transition-all active:scale-95"><ChevronLeft size={20} /></button>
                 <button onClick={goToToday} className="text-xs font-bold text-gray-600 hover:bg-white hover:shadow-sm px-3 py-1.5 rounded-md uppercase tracking-wide">Hoje</button>
-                <button onClick={nextMonth} className="p-1.5 md:p-2 hover:bg-white hover:shadow-sm rounded-md text-gray-600 transition-all"><ChevronRight size={18} /></button>
+                <button onClick={nextMonth} className="p-2 hover:bg-white hover:shadow-sm rounded-md text-gray-600 transition-all active:scale-95"><ChevronRight size={20} /></button>
               </div>
             </div>
 
             {/* Cabeçalho dias da semana */}
-            <div className="grid grid-cols-7 border-b border-gray-100 bg-gray-50/50">
+            <div className="grid grid-cols-7 border-b border-gray-100 bg-gray-50/50 flex-shrink-0">
               {days.slice(0, 7).map(day => (
                 <div key={day.toString()} className="py-3 text-center text-[10px] md:text-xs font-bold text-gray-400 uppercase tracking-wider">
                   {formatWeekDay(day).substring(0, 3)}
@@ -123,8 +124,8 @@ export function Agenda() {
               ))}
             </div>
 
-            {/* Grid de dias - FIX: Ajuste de padding e fontes para mobile */}
-            <div className="grid grid-cols-7 flex-1 auto-rows-fr">
+            {/* Grid de dias - FIX: Grid fixo de 6 linhas para evitar pulos */}
+            <div className="grid grid-cols-7 grid-rows-6 flex-1">
               {days.map(day => {
                 const isSelected = isSameDay(day, selectedDate);
                 const isCurrentMonth = isSameMonth(day, currentDate);
@@ -135,27 +136,24 @@ export function Agenda() {
                   <div 
                     key={day.toString()} 
                     onClick={() => setSelectedDate(day)} 
-                    // FIX: p-0.5 no mobile para evitar quebra de layout
                     className={`
-                      relative border-b border-r border-gray-50 p-0.5 md:p-2 cursor-pointer transition-all duration-200 min-h-[50px] md:min-h-0
+                      relative border-b border-r border-gray-50 p-1 cursor-pointer transition-all duration-200
+                      flex flex-col items-center justify-center
                       ${!isCurrentMonth ? 'bg-gray-50/30 text-gray-300' : 'bg-white active:bg-green-50'}
                       ${isSelected ? '!bg-green-50 ring-2 ring-inset ring-primary z-10' : ''}
                     `}
                   >
-                    <div className="flex flex-col items-center justify-between h-full py-1">
-                      {/* FIX: Texto menor em mobile (text-xs) */}
-                      <span className={`
-                        w-7 h-7 md:w-8 md:h-8 flex items-center justify-center rounded-full text-xs md:text-sm font-medium transition-all
-                        ${isDayToday && !isSelected ? 'bg-gray-900 text-white shadow-md' : ''}
-                        ${isSelected ? 'text-primary font-bold text-base md:text-lg' : 'text-gray-700'}
-                      `}>
-                        {format(day, 'd')}
-                      </span>
-                      
-                      {temAgendamento && (
-                        <span className="w-1 h-1 md:w-1.5 md:h-1.5 rounded-full bg-primary shadow-sm mt-0.5 md:mt-1"></span>
-                      )}
-                    </div>
+                    <span className={`
+                      w-8 h-8 flex items-center justify-center rounded-full text-xs md:text-sm font-medium transition-all
+                      ${isDayToday && !isSelected ? 'bg-gray-900 text-white shadow-md' : ''}
+                      ${isSelected ? 'text-primary font-bold text-base md:text-lg scale-110' : 'text-gray-700'}
+                    `}>
+                      {format(day, 'd')}
+                    </span>
+                    
+                    {temAgendamento && (
+                      <span className="w-1.5 h-1.5 rounded-full bg-primary shadow-sm mt-1"></span>
+                    )}
                   </div>
                 );
               })}
@@ -211,10 +209,10 @@ export function Agenda() {
                         removerAgendamento(agendamento.id);
                         addToast({ type: 'info', title: 'Agendamento removido' });
                     }}
-                    className="self-start text-gray-300 hover:text-red-500 hover:bg-red-50 p-1.5 rounded-lg transition-all"
+                    className="self-start text-gray-300 hover:text-red-500 hover:bg-red-50 p-2 rounded-lg transition-all"
                     title="Cancelar agendamento"
                   >
-                    <Trash2 size={16} />
+                    <Trash2 size={18} />
                   </button>
                 </div>
               ))
@@ -222,7 +220,7 @@ export function Agenda() {
           </div>
         </div>
 
-        {/* --- MODAL (Mantido igual, mas agora o form usa handleSaveAppointment corrigido) --- */}
+        {/* --- MODAL RESPONSIVO --- */}
         <Modal 
           isOpen={isModalOpen} 
           onClose={fecharModal} 
@@ -255,10 +253,10 @@ export function Agenda() {
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1.5">Paciente</label>
                 <div className="relative">
-                  <User size={18} className="absolute left-3 top-3 text-gray-400" />
+                  <User size={18} className="absolute left-3 top-3.5 text-gray-400" />
                   <select 
                     required
-                    className="w-full pl-10 pr-10 py-2.5 border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all bg-white appearance-none text-gray-700"
+                    className="w-full pl-10 pr-10 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all bg-white appearance-none text-gray-700 text-base"
                     value={novoAgendamento.pacienteId}
                     onChange={e => setNovoAgendamento({...novoAgendamento, pacienteId: e.target.value})}
                   >
@@ -271,21 +269,22 @@ export function Agenda() {
                       <option disabled>Nenhum paciente ativo cadastrado</option>
                     )}
                   </select>
-                  <div className="absolute right-3 top-3 text-gray-400 pointer-events-none">
+                  <div className="absolute right-3 top-3.5 text-gray-400 pointer-events-none">
                     <ChevronDown size={16} />
                   </div>
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
+              {/* FIX: Layout empilhado no mobile (grid-cols-1) e lado a lado no desktop (md:grid-cols-2) */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1.5">Horário</label>
                   <div className="relative">
-                    <Clock size={18} className="absolute left-3 top-3 text-gray-400" />
+                    <Clock size={18} className="absolute left-3 top-3.5 text-gray-400" />
                     <input 
                       type="time" 
                       required
-                      className={`w-full pl-10 pr-3 py-2.5 border rounded-xl focus:ring-2 outline-none transition-all ${
+                      className={`w-full pl-10 pr-3 py-3 border rounded-xl focus:ring-2 outline-none transition-all text-base ${
                         erroConflito 
                           ? 'border-red-300 focus:ring-red-200 focus:border-red-500 bg-red-50 text-red-700' 
                           : 'border-gray-300 focus:ring-primary/20 focus:border-primary'
@@ -302,9 +301,9 @@ export function Agenda() {
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1.5">Tipo de Sessão</label>
                   <div className="relative">
-                    <AlignLeft size={18} className="absolute left-3 top-3 text-gray-400" />
+                    <AlignLeft size={18} className="absolute left-3 top-3.5 text-gray-400" />
                     <select 
-                      className="w-full pl-10 pr-8 py-2.5 border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none bg-white appearance-none"
+                      className="w-full pl-10 pr-8 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none bg-white appearance-none text-base"
                       value={novoAgendamento.tipo}
                       onChange={e => setNovoAgendamento({...novoAgendamento, tipo: e.target.value})}
                     >
@@ -313,7 +312,7 @@ export function Agenda() {
                       <option>Acompanhamento</option>
                       <option>Terapia de Casal</option>
                     </select>
-                    <div className="absolute right-3 top-3 text-gray-400 pointer-events-none">
+                    <div className="absolute right-3 top-3.5 text-gray-400 pointer-events-none">
                       <ChevronDown size={16} />
                     </div>
                   </div>
@@ -325,13 +324,13 @@ export function Agenda() {
               <button 
                 type="button" 
                 onClick={fecharModal} 
-                className="flex-1 py-2.5 border border-gray-300 text-gray-700 rounded-lg font-medium hover:bg-gray-50 transition-colors"
+                className="flex-1 py-3 border border-gray-300 text-gray-700 rounded-xl font-medium hover:bg-gray-50 transition-colors"
               >
                 Cancelar
               </button>
               <button 
                 type="submit" 
-                className="flex-1 py-2.5 bg-primary text-white rounded-lg font-medium hover:bg-green-700 shadow-md transition-all active:scale-95"
+                className="flex-1 py-3 bg-primary text-white rounded-xl font-medium hover:bg-green-700 shadow-md transition-all active:scale-95"
               >
                 Confirmar
               </button>

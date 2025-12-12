@@ -1,10 +1,8 @@
 import { useState } from 'react';
 import { 
   startOfMonth, 
-  endOfMonth, 
   startOfWeek, 
-  endOfWeek, 
-  eachDayOfInterval, 
+  addDays, 
   addMonths, 
   subMonths,
   format,
@@ -28,19 +26,17 @@ export function useCalendar() {
     setSelectedDate(today);
   };
 
-  // Geração dos dias do grid
+  // Geração dos dias do grid (CORREÇÃO: Sempre gera 42 dias / 6 semanas)
   const generateDays = () => {
     const monthStart = startOfMonth(currentDate);
-    const monthEnd = endOfMonth(monthStart);
     
-    // Importante: Passar locale para garantir alinhamento correto da semana
+    // Inicia no domingo (ou segunda, conforme locale) anterior ao início do mês
     const startDate = startOfWeek(monthStart, { locale: ptBR });
-    const endDate = endOfWeek(monthEnd, { locale: ptBR });
 
-    return eachDayOfInterval({
-      start: startDate,
-      end: endDate,
-    });
+    // Gera array fixo de 42 dias para manter o grid estável
+    const days = Array.from({ length: 42 }, (_, i) => addDays(startDate, i));
+
+    return days;
   };
 
   // Formatadores
