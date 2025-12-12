@@ -20,8 +20,8 @@ export function MainLayout() {
   if (!usuario) return null;
 
   return (
-    // MUDANÇA 1: Voltamos para h-screen com overflow-hidden para travar a rolagem do fundo
-    <div className="flex flex-row h-screen w-screen overflow-hidden bg-background font-sans">
+    // Mudança 1: h-screen para h-[100dvh] para garantir altura correta no mobile
+    <div className="flex flex-row h-[100dvh] w-screen overflow-hidden bg-background font-sans">
       
       {/* Sidebar Desktop */}
       <div className="hidden md:flex h-full shadow-xl z-30">
@@ -31,22 +31,22 @@ export function MainLayout() {
       {/* Sidebar Mobile (Overlay) */}
       {isMobileMenuOpen && (
         <div className="fixed inset-0 z-50 flex md:hidden">
-          {/* Fundo Preto */}
+          {/* Fundo Preto Transparente */}
           <div 
             className="fixed inset-0 bg-black/60 backdrop-blur-sm transition-opacity" 
             onClick={() => setIsMobileMenuOpen(false)} 
           />
           
           {/* Menu Deslizante */}
-          {/* MUDANÇA 2: h-full para ocupar toda a altura do container fixo */}
-          <div className="relative w-72 bg-white h-full shadow-2xl flex flex-col animate-in slide-in-from-left duration-300">
+          {/* Mudança 2: h-[100dvh] aqui também */}
+          <div className="relative w-72 bg-white h-[100dvh] shadow-2xl flex flex-col animate-in slide-in-from-left duration-300">
             <button 
               onClick={() => setIsMobileMenuOpen(false)}
               className="absolute top-4 right-4 p-2 text-gray-400 hover:text-red-500 rounded-lg z-50"
             >
               <X size={20} />
             </button>
-            
+            {/* Removemos o onClick aqui para não fechar ao clicar no menu em si, apenas nos links */}
             <div className="h-full flex flex-col">
                <Sidebar mobile onClose={() => setIsMobileMenuOpen(false)} />
             </div>
