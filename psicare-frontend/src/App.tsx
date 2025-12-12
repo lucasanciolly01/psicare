@@ -3,6 +3,7 @@ import { Suspense, lazy } from 'react';
 import { PacientesProvider } from './context/PacientesContext';
 import { AgendamentosProvider } from './context/AgendamentosContext';
 import { AuthProvider } from './context/AuthContext';
+import { ToastProvider } from './context/ToastContext'; // NOVO IMPORT
 
 // Lazy Imports
 const MainLayout = lazy(() => import('./components/layout/MainLayout').then(m => ({ default: m.MainLayout })));
@@ -16,26 +17,28 @@ const Cadastro = lazy(() => import('./pages/Cadastro').then(m => ({ default: m.C
 function App() {
   return (
     <BrowserRouter>
-      <AuthProvider>
-        <PacientesProvider>
-          <AgendamentosProvider>
-            <Suspense fallback={<div className="flex h-screen items-center justify-center">Carregando PsiCare...</div>}>
-              <Routes>
-                <Route path="/login" element={<Login />} />
-                <Route path="/cadastro" element={<Cadastro />} />
-                
-                <Route path="/" element={<MainLayout />}>
-                  <Route index element={<Navigate to="/dashboard" replace />} />
-                  <Route path="dashboard" element={<Dashboard />} />
-                  <Route path="agenda" element={<Agenda />} />
-                  <Route path="pacientes" element={<Pacientes />} />
-                  <Route path="perfil" element={<Perfil />} />
-                </Route>
-              </Routes>
-            </Suspense>
-          </AgendamentosProvider>
-        </PacientesProvider>
-      </AuthProvider>
+      <ToastProvider> {/* NOVO PROVIDER - Deve envolver os outros */}
+        <AuthProvider>
+          <PacientesProvider>
+            <AgendamentosProvider>
+              <Suspense fallback={<div className="flex h-screen items-center justify-center text-primary font-bold animate-pulse">Carregando PsiCare...</div>}>
+                <Routes>
+                  <Route path="/login" element={<Login />} />
+                  <Route path="/cadastro" element={<Cadastro />} />
+                  
+                  <Route path="/" element={<MainLayout />}>
+                    <Route index element={<Navigate to="/dashboard" replace />} />
+                    <Route path="dashboard" element={<Dashboard />} />
+                    <Route path="agenda" element={<Agenda />} />
+                    <Route path="pacientes" element={<Pacientes />} />
+                    <Route path="perfil" element={<Perfil />} />
+                  </Route>
+                </Routes>
+              </Suspense>
+            </AgendamentosProvider>
+          </PacientesProvider>
+        </AuthProvider>
+      </ToastProvider>
     </BrowserRouter>
   );
 }

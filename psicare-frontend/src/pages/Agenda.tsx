@@ -3,11 +3,11 @@ import { ChevronLeft, ChevronRight, Clock, Plus, Calendar as CalendarIcon, User,
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 
-// Imports internos (ajuste os caminhos conforme seu projeto)
 import { useCalendar } from '../hooks/useCalendar';
 import { Modal } from '../components/ui/Modal';
 import { useAgendamentos } from '../context/AgendamentosContext';
 import { usePacientes } from '../context/PacientesContext';
+import { useToast } from '../context/ToastContext'; // Integração Toast
 import { verificarConflito } from '../utils/agendamento';
 
 export function Agenda() {
@@ -20,6 +20,7 @@ export function Agenda() {
 
   const { agendamentos, adicionarAgendamento, removerAgendamento } = useAgendamentos();
   const { pacientes } = usePacientes();
+  const { addToast } = useToast();
 
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [erroConflito, setErroConflito] = useState<string | null>(null);
@@ -32,36 +33,30 @@ export function Agenda() {
 
   const pacientesAtivos = pacientes.filter(p => p.status === 'ativo');
 
-  // --- FUNÇÃO DE SALVAR COM AS VALIDAÇÕES ---
   const handleSaveAppointment = (e: React.FormEvent) => {
     e.preventDefault();
     setErroConflito(null);
 
     if (!novoAgendamento.pacienteId || !novoAgendamento.hora) return;
 
-    // 1. Cria objeto Date para validar passado
     const [horasInput, minutosInput] = novoAgendamento.hora.split(':').map(Number);
     const dataAgendamento = new Date(selectedDate);
     dataAgendamento.setHours(horasInput, minutosInput, 0, 0);
 
     const agora = new Date();
 
-    // REGRA 1: Bloquear Passado
     if (dataAgendamento < agora) {
-      setErroConflito("Não é possível agendar para datas ou horários que já passaram.");
+      setErroConflito("Não é possível agendar para o passado.");
       return;
     }
 
     const dataSelecionadaStr = selectedDate.toISOString().split('T')[0];
 
-    // REGRA 2: Bloquear Conflito de 50min
-    // Utiliza a função importada de utils/agendamento.ts
     if (verificarConflito(agendamentos, dataSelecionadaStr, novoAgendamento.hora)) {
-      setErroConflito("Conflito! Já existe um agendamento neste intervalo (50min).");
+      setErroConflito("Conflito! Horário já ocupado (intervalo mínimo de 50min).");
       return;
     }
 
-    // Se passou nas validações, salva
     const pacienteSelecionado = pacientes.find(p => p.id === novoAgendamento.pacienteId);
 
     if (pacienteSelecionado) {
@@ -70,6 +65,12 @@ export function Agenda() {
         hora: novoAgendamento.hora,
         pacienteNome: pacienteSelecionado.nome,
         tipo: novoAgendamento.tipo
+      });
+      
+      addToast({
+        type: 'success',
+        title: 'Agendamento Confirmado',
+        description: `${pacienteSelecionado.nome} agendado para ${novoAgendamento.hora}`
       });
     }
 
@@ -87,7 +88,7 @@ export function Agenda() {
     .sort((a,b) => a.hora.localeCompare(b.hora));
 
   return (
-    <div className="space-y-6 pb-24 lg:pb-0">
+    <div className="space-y-6 pb-24 lg:pb-0 animate-fade-in">
       
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
@@ -96,20 +97,20 @@ export function Agenda() {
         </div>
       </div>
 
-      <div className="flex flex-col lg:flex-row gap-8 h-auto lg:h-[calc(100vh-180px)]">
+      <div className="flex flex-col lg:flex-row gap-6 lg:h-[calc(100vh-180px)]">
         
-        {/* --- COLUNA ESQUERDA: CALENDÁRIO --- */}
-        <div className="flex-1 bg-white rounded-xl shadow-sm border border-gray-200 flex flex-col min-h-[420px]">
+        {/* --- CALENDÁRIO --- */}
+        <div className="flex-1 bg-white rounded-xl shadow-sm border border-gray-200 flex flex-col min-h-[420px] lg:min-h-0">
             {/* Header Calendário */}
-            <div className="p-5 flex items-center justify-between border-b border-gray-100">
-              <h2 className="text-lg font-bold text-gray-800 capitalize flex items-center gap-2">
+            <div className="p-4 md:p-5 flex items-center justify-between border-b border-gray-100">
+              <h2 className="text-base md:text-lg font-bold text-gray-800 capitalize flex items-center gap-2">
                 <CalendarIcon size={20} className="text-primary"/>
                 {formatMonthYear()}
               </h2>
               <div className="flex items-center gap-1 bg-gray-50 p-1 rounded-lg border border-gray-100">
-                <button onClick={prevMonth} className="p-2 hover:bg-white hover:shadow-sm rounded-md text-gray-600 transition-all"><ChevronLeft size={20} /></button>
+                <button onClick={prevMonth} className="p-1.5 md:p-2 hover:bg-white hover:shadow-sm rounded-md text-gray-600 transition-all"><ChevronLeft size={18} /></button>
                 <button onClick={goToToday} className="text-xs font-bold text-gray-600 hover:bg-white hover:shadow-sm px-3 py-1.5 rounded-md uppercase tracking-wide">Hoje</button>
-                <button onClick={nextMonth} className="p-2 hover:bg-white hover:shadow-sm rounded-md text-gray-600 transition-all"><ChevronRight size={20} /></button>
+                <button onClick={nextMonth} className="p-1.5 md:p-2 hover:bg-white hover:shadow-sm rounded-md text-gray-600 transition-all"><ChevronRight size={18} /></button>
               </div>
             </div>
 
@@ -122,7 +123,7 @@ export function Agenda() {
               ))}
             </div>
 
-            {/* Grid de dias */}
+            {/* Grid de dias - FIX: Ajuste de padding e fontes para mobile */}
             <div className="grid grid-cols-7 flex-1 auto-rows-fr">
               {days.map(day => {
                 const isSelected = isSameDay(day, selectedDate);
@@ -134,23 +135,25 @@ export function Agenda() {
                   <div 
                     key={day.toString()} 
                     onClick={() => setSelectedDate(day)} 
+                    // FIX: p-0.5 no mobile para evitar quebra de layout
                     className={`
-                      relative border-b border-r border-gray-50 p-1 md:p-2 cursor-pointer transition-all duration-200 min-h-[60px] md:min-h-0
+                      relative border-b border-r border-gray-50 p-0.5 md:p-2 cursor-pointer transition-all duration-200 min-h-[50px] md:min-h-0
                       ${!isCurrentMonth ? 'bg-gray-50/30 text-gray-300' : 'bg-white active:bg-green-50'}
                       ${isSelected ? '!bg-green-50 ring-2 ring-inset ring-primary z-10' : ''}
                     `}
                   >
                     <div className="flex flex-col items-center justify-between h-full py-1">
+                      {/* FIX: Texto menor em mobile (text-xs) */}
                       <span className={`
-                        w-8 h-8 flex items-center justify-center rounded-full text-sm font-medium transition-all
+                        w-7 h-7 md:w-8 md:h-8 flex items-center justify-center rounded-full text-xs md:text-sm font-medium transition-all
                         ${isDayToday && !isSelected ? 'bg-gray-900 text-white shadow-md' : ''}
-                        ${isSelected ? 'text-primary font-bold text-lg' : 'text-gray-700'}
+                        ${isSelected ? 'text-primary font-bold text-base md:text-lg' : 'text-gray-700'}
                       `}>
                         {format(day, 'd')}
                       </span>
                       
                       {temAgendamento && (
-                        <span className="w-1.5 h-1.5 rounded-full bg-primary shadow-sm mt-1"></span>
+                        <span className="w-1 h-1 md:w-1.5 md:h-1.5 rounded-full bg-primary shadow-sm mt-0.5 md:mt-1"></span>
                       )}
                     </div>
                   </div>
@@ -159,7 +162,7 @@ export function Agenda() {
             </div>
         </div>
 
-        {/* --- COLUNA DIREITA: LISTA DE AGENDAMENTOS --- */}
+        {/* --- LISTA DE AGENDAMENTOS --- */}
         <div className="w-full lg:w-96 bg-white rounded-xl shadow-sm border border-gray-200 flex flex-col h-auto lg:h-full min-h-[300px]">
           <div className="p-5 border-b border-gray-100 flex justify-between items-center bg-gray-50/30">
             <div>
@@ -180,7 +183,7 @@ export function Agenda() {
             {agendamentosDoDia.length === 0 ? (
               <div className="h-full flex flex-col items-center justify-center text-gray-300 text-center p-8 border-2 border-dashed border-gray-100 rounded-xl m-2">
                 <Clock size={40} className="mb-3 opacity-20" />
-                <p className="text-sm font-medium text-gray-400">Agenda livre</p>
+                <p className="text-sm font-medium text-gray-400">Nenhum agendamento</p>
                 <button onClick={() => setIsModalOpen(true)} className="mt-2 text-primary text-xs font-bold hover:underline uppercase tracking-wide">
                   + Adicionar horário
                 </button>
@@ -204,8 +207,11 @@ export function Agenda() {
                     </div>
                   </div>
                   <button 
-                    onClick={() => removerAgendamento(agendamento.id)}
-                    className="self-start text-gray-300 hover:text-red-500 hover:bg-red-50 p-1.5 rounded-lg transition-all lg:opacity-0 lg:group-hover:opacity-100"
+                    onClick={() => {
+                        removerAgendamento(agendamento.id);
+                        addToast({ type: 'info', title: 'Agendamento removido' });
+                    }}
+                    className="self-start text-gray-300 hover:text-red-500 hover:bg-red-50 p-1.5 rounded-lg transition-all"
                     title="Cancelar agendamento"
                   >
                     <Trash2 size={16} />
@@ -216,7 +222,7 @@ export function Agenda() {
           </div>
         </div>
 
-        {/* --- MODAL DE NOVO AGENDAMENTO --- */}
+        {/* --- MODAL (Mantido igual, mas agora o form usa handleSaveAppointment corrigido) --- */}
         <Modal 
           isOpen={isModalOpen} 
           onClose={fecharModal} 
