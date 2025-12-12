@@ -1,132 +1,148 @@
-import { useAuth } from '../context/AuthContext';
-import { Link, useNavigate } from 'react-router-dom';
-import { Lock, Mail, User } from 'lucide-react';
-import { useForm } from 'react-hook-form';
-import { z } from 'zod';
-import { zodResolver } from '@hookform/resolvers/zod';
+import React from 'react';
+import { User, Mail, Lock, Check } from 'lucide-react'; // Certifique-se de ter lucide-react ou use seus próprios ícones
 
-// Schema de validação
-const cadastroSchema = z.object({
-  nome: z.string().min(3, 'O nome deve ter pelo menos 3 caracteres'),
-  email: z.string().email('Formato de e-mail inválido'),
-  senha: z.string().min(6, 'A senha deve ter no mínimo 6 caracteres'),
-  confirmacao: z.string(),
-  // Validação corrigida para boolean
-  termos: z.boolean().refine((val) => val === true, {
-    message: 'Você deve aceitar os termos de uso',
-  }),
-}).refine((data) => data.senha === data.confirmacao, {
-  message: "As senhas não coincidem",
-  path: ["confirmacao"],
-});
-
-type CadastroSchema = z.infer<typeof cadastroSchema>;
-
-export function Cadastro() {
-  const { login } = useAuth();
-  const navigate = useNavigate();
-  
-  const { 
-    register, 
-    handleSubmit, 
-    formState: { errors, isSubmitting } 
-  } = useForm<CadastroSchema>({
-    resolver: zodResolver(cadastroSchema),
-    defaultValues: {
-      nome: '',
-      email: '',
-      senha: '',
-      confirmacao: '',
-      termos: false, // Inicia desmarcado
-    }
-  });
-
-  const handleCadastro = (data: CadastroSchema) => {
-    // Simula cadastro e login
-    console.log('Dados enviados:', data);
-    login(data.email);
-    navigate('/');
-  };
-
+export default function Cadastro() {
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 p-4">
-      <div className="bg-white p-8 rounded-2xl shadow-xl w-full max-w-md border border-gray-100">
-        <div className="text-center mb-6">
-          <h1 className="text-2xl font-bold text-gray-800">Crie sua conta</h1>
-          <p className="text-gray-500 text-sm">Comece a gerenciar sua clínica hoje.</p>
-        </div>
+    // CONTAINER PRINCIPAL (CORREÇÃO DE LAYOUT)
+    // min-h-screen: Garante altura mínima de 100% da tela, mas permite crescer (rolagem).
+    // py-12: Adiciona espaço seguro em cima e embaixo para nada ficar colado na borda.
+    // flex-col justify-center: Centraliza verticalmente se sobrar espaço, mas respeita o fluxo se faltar.
+    <div className="min-h-screen bg-gray-50 flex flex-col justify-center py-12 sm:px-6 lg:px-8">
+      
+      {/* CABEÇALHO DO LOGO (Psicare) */}
+      <div className="sm:mx-auto sm:w-full sm:max-w-md">
+        {/* Se tiver uma imagem de logo, coloque aqui */}
+        <h2 className="text-center text-3xl font-extrabold text-gray-900 mb-2">
+          Psicare
+        </h2>
+      </div>
 
-        <form onSubmit={handleSubmit(handleCadastro)} className="space-y-4">
+      {/* CONTAINER DO CARD BRANCO */}
+      <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md">
+        <div className="bg-white py-8 px-4 shadow sm:rounded-lg sm:px-10">
           
-          {/* Campo Nome */}
-          <div className="relative">
-            <User className="absolute left-3 top-3 text-gray-400" size={18} />
-            <input 
-              type="text" 
-              placeholder="Nome Completo"
-              className={`w-full pl-10 pr-4 py-2 border rounded-lg outline-none transition-all ${errors.nome ? 'border-red-500 focus:ring-red-200' : 'border-gray-300 focus:border-primary focus:ring-2 focus:ring-primary/20'}`}
-              {...register('nome')}
-            />
-            {errors.nome && <span className="text-xs text-red-500 ml-1">{errors.nome.message}</span>}
+          {/* TÍTULO DA PÁGINA */}
+          <div className="mb-6 text-center">
+            <h3 className="text-2xl font-bold text-gray-900">
+              Crie sua conta
+            </h3>
+            <p className="mt-2 text-sm text-gray-600">
+              Comece a gerenciar sua clínica hoje.
+            </p>
           </div>
 
-          {/* Campo Email */}
-          <div className="relative">
-            <Mail className="absolute left-3 top-3 text-gray-400" size={18} />
-            <input 
-              type="email" 
-              placeholder="E-mail profissional"
-              className={`w-full pl-10 pr-4 py-2 border rounded-lg outline-none transition-all ${errors.email ? 'border-red-500 focus:ring-red-200' : 'border-gray-300 focus:border-primary focus:ring-2 focus:ring-primary/20'}`}
-              {...register('email')}
-            />
-            {errors.email && <span className="text-xs text-red-500 ml-1">{errors.email.message}</span>}
-          </div>
-
-          {/* Campo Senha */}
-          <div className="relative">
-            <Lock className="absolute left-3 top-3 text-gray-400" size={18} />
-            <input 
-              type="password" 
-              placeholder="Senha"
-              className={`w-full pl-10 pr-4 py-2 border rounded-lg outline-none transition-all ${errors.senha ? 'border-red-500 focus:ring-red-200' : 'border-gray-300 focus:border-primary focus:ring-2 focus:ring-primary/20'}`}
-              {...register('senha')}
-            />
-            {errors.senha && <span className="text-xs text-red-500 ml-1">{errors.senha.message}</span>}
-          </div>
-
-          {/* Campo Confirmação */}
-          <div className="relative">
-            <Lock className="absolute left-3 top-3 text-gray-400" size={18} />
-            <input 
-              type="password" 
-              placeholder="Confirme a senha"
-              className={`w-full pl-10 pr-4 py-2 border rounded-lg outline-none transition-all ${errors.confirmacao ? 'border-red-500 focus:ring-red-200' : 'border-gray-300 focus:border-primary focus:ring-2 focus:ring-primary/20'}`}
-              {...register('confirmacao')}
-            />
-            {errors.confirmacao && <span className="text-xs text-red-500 ml-1">{errors.confirmacao.message}</span>}
-          </div>
-
-          {/* Campo Termos */}
-          <div className="flex flex-col gap-1">
-            <div className="flex items-start gap-2">
-              <input 
-                type="checkbox" id="termos" 
-                className="mt-1 rounded text-primary focus:ring-primary"
-                {...register('termos')}
-              />
-              <label htmlFor="termos" className="text-xs text-gray-600 cursor-pointer">
-                Li e aceito os <Link to="#" className="text-primary hover:underline">Termos de Uso</Link> e a <Link to="#" className="text-primary hover:underline">Política de Privacidade</Link>.
-              </label>
+          {/* FORMULÁRIO */}
+          <form className="space-y-6" action="#" method="POST">
+            
+            {/* Input: Nome Completo */}
+            <div>
+              <div className="mt-1 relative rounded-md shadow-sm">
+                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                  <User className="h-5 w-5 text-gray-400" aria-hidden="true" />
+                </div>
+                <input
+                  id="name"
+                  name="name"
+                  type="text"
+                  autoComplete="name"
+                  required
+                  className="focus:ring-emerald-500 focus:border-emerald-500 block w-full pl-10 sm:text-sm border-gray-300 rounded-md py-3"
+                  placeholder="Nome Completo"
+                />
+              </div>
             </div>
-            {errors.termos && <span className="text-xs text-red-500 ml-1">{errors.termos.message}</span>}
+
+            {/* Input: E-mail */}
+            <div>
+              <div className="mt-1 relative rounded-md shadow-sm">
+                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                  <Mail className="h-5 w-5 text-gray-400" aria-hidden="true" />
+                </div>
+                <input
+                  id="email"
+                  name="email"
+                  type="email"
+                  autoComplete="email"
+                  required
+                  className="focus:ring-emerald-500 focus:border-emerald-500 block w-full pl-10 sm:text-sm border-gray-300 rounded-md py-3"
+                  placeholder="E-mail profissional"
+                />
+              </div>
+            </div>
+
+            {/* Input: Senha */}
+            <div>
+              <div className="mt-1 relative rounded-md shadow-sm">
+                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                  <Lock className="h-5 w-5 text-gray-400" aria-hidden="true" />
+                </div>
+                <input
+                  id="password"
+                  name="password"
+                  type="password"
+                  required
+                  className="focus:ring-emerald-500 focus:border-emerald-500 block w-full pl-10 sm:text-sm border-gray-300 rounded-md py-3"
+                  placeholder="Senha"
+                />
+              </div>
+            </div>
+
+             {/* Input: Confirmar Senha */}
+             <div>
+              <div className="mt-1 relative rounded-md shadow-sm">
+                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                  <Lock className="h-5 w-5 text-gray-400" aria-hidden="true" />
+                </div>
+                <input
+                  id="confirmPassword"
+                  name="confirmPassword"
+                  type="password"
+                  required
+                  className="focus:ring-emerald-500 focus:border-emerald-500 block w-full pl-10 sm:text-sm border-gray-300 rounded-md py-3"
+                  placeholder="Confirme a senha"
+                />
+              </div>
+            </div>
+
+            {/* Checkbox: Termos */}
+            <div className="flex items-start">
+              <div className="flex items-center h-5">
+                <input
+                  id="terms"
+                  name="terms"
+                  type="checkbox"
+                  className="focus:ring-emerald-500 h-4 w-4 text-emerald-600 border-gray-300 rounded"
+                />
+              </div>
+              <div className="ml-3 text-sm">
+                <label htmlFor="terms" className="font-medium text-gray-700">
+                  Li e aceito os <a href="#" className="text-emerald-600 hover:text-emerald-500">Termos de Uso</a> e a <a href="#" className="text-emerald-600 hover:text-emerald-500">Política de Privacidade</a>.
+                </label>
+              </div>
+            </div>
+
+            {/* Botão de Ação */}
+            <div>
+              <button
+                type="submit"
+                className="w-full flex justify-center py-3 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-emerald-600 hover:bg-emerald-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-emerald-500"
+              >
+                Criar Conta
+              </button>
+            </div>
+          </form>
+
+          {/* Rodapé: Link para Login */}
+          <div className="mt-6">
+            <div className="relative">
+              <div className="relative flex justify-center text-sm">
+                <span className="px-2 bg-white text-gray-500">
+                  Já tem conta? <a href="#" className="font-medium text-emerald-600 hover:text-emerald-500">Entrar</a>
+                </span>
+              </div>
+            </div>
           </div>
 
-          <button type="submit" disabled={isSubmitting} className="w-full bg-primary hover:bg-green-700 disabled:bg-gray-400 text-white py-2.5 rounded-lg font-medium transition-all shadow-md hover:shadow-lg">
-            {isSubmitting ? 'Criando conta...' : 'Criar Conta'}
-          </button>
-        </form>
-        <div className="mt-6 text-center text-sm text-gray-600">
-          Já tem conta? <Link to="/login" className="text-primary font-bold hover:underline">Entrar</Link>
         </div>
       </div>
     </div>
