@@ -40,12 +40,12 @@ export function Agenda() {
 
     if (!novoAgendamento.pacienteId || !novoAgendamento.hora) return;
 
+    // Validação de horário passado e conflitos (mantida a lógica original)
     const [horasInput, minutosInput] = novoAgendamento.hora.split(':').map(Number);
     const dataAgendamento = new Date(selectedDate);
     dataAgendamento.setHours(horasInput, minutosInput, 0, 0);
 
     const agora = new Date();
-
     if (dataAgendamento < agora) {
       setErroConflito("Não é possível agendar para o passado.");
       return;
@@ -124,7 +124,7 @@ export function Agenda() {
               ))}
             </div>
 
-            {/* Grid de dias - FIX: Grid fixo de 6 linhas para evitar pulos */}
+            {/* Grid de dias */}
             <div className="grid grid-cols-7 grid-rows-6 flex-1">
               {days.map(day => {
                 const isSelected = isSameDay(day, selectedDate);
@@ -220,7 +220,7 @@ export function Agenda() {
           </div>
         </div>
 
-        {/* --- MODAL RESPONSIVO --- */}
+        {/* --- MODAL DE AGENDAMENTO (Mobile Corrigido) --- */}
         <Modal 
           isOpen={isModalOpen} 
           onClose={fecharModal} 
@@ -275,7 +275,6 @@ export function Agenda() {
                 </div>
               </div>
 
-              {/* FIX: Layout empilhado no mobile (grid-cols-1) e lado a lado no desktop (md:grid-cols-2) */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1.5">Horário</label>
@@ -284,9 +283,10 @@ export function Agenda() {
                     <input 
                       type="time" 
                       required
-                      className={`w-full pl-10 pr-3 py-3 border rounded-xl focus:ring-2 outline-none transition-all text-base ${
+                      // CORREÇÃO AQUI: Adicionado 'bg-white', 'text-gray-900' e 'appearance-none'
+                      className={`w-full pl-10 pr-3 py-3 border rounded-xl focus:ring-2 outline-none transition-all text-base bg-white text-gray-900 appearance-none ${
                         erroConflito 
-                          ? 'border-red-300 focus:ring-red-200 focus:border-red-500 bg-red-50 text-red-700' 
+                          ? 'border-red-300 focus:ring-red-200 focus:border-red-500' 
                           : 'border-gray-300 focus:ring-primary/20 focus:border-primary'
                       }`}
                       value={novoAgendamento.hora}
@@ -303,7 +303,7 @@ export function Agenda() {
                   <div className="relative">
                     <AlignLeft size={18} className="absolute left-3 top-3.5 text-gray-400" />
                     <select 
-                      className="w-full pl-10 pr-8 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none bg-white appearance-none text-base"
+                      className="w-full pl-10 pr-8 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none bg-white appearance-none text-base text-gray-700"
                       value={novoAgendamento.tipo}
                       onChange={e => setNovoAgendamento({...novoAgendamento, tipo: e.target.value})}
                     >
@@ -320,17 +320,17 @@ export function Agenda() {
               </div>
             </div>
 
-            <div className="pt-4 flex gap-3 border-t border-gray-50 mt-2">
+            <div className="pt-4 flex flex-col-reverse md:flex-row gap-3 border-t border-gray-50 mt-2">
               <button 
                 type="button" 
                 onClick={fecharModal} 
-                className="flex-1 py-3 border border-gray-300 text-gray-700 rounded-xl font-medium hover:bg-gray-50 transition-colors"
+                className="w-full md:w-auto flex-1 py-3 border border-gray-300 text-gray-700 rounded-xl font-medium hover:bg-gray-50 transition-colors"
               >
                 Cancelar
               </button>
               <button 
                 type="submit" 
-                className="flex-1 py-3 bg-primary text-white rounded-xl font-medium hover:bg-green-700 shadow-md transition-all active:scale-95"
+                className="w-full md:w-auto flex-1 py-3 bg-primary text-white rounded-xl font-medium hover:bg-green-700 shadow-md transition-all active:scale-95"
               >
                 Confirmar
               </button>
