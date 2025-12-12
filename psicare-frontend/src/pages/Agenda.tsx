@@ -10,6 +10,7 @@ import {
   Trash2,
   ChevronDown,
   AlertCircle,
+  AlertTriangle, // Importei ícone de alerta para o modal
 } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -43,9 +44,13 @@ export function Agenda() {
   const { pacientes } = usePacientes();
   const { addToast } = useToast();
 
+  // Estados dos Modais
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [erroConflito, setErroConflito] = useState<string | null>(null);
+  
+  // NOVO: Estado para controlar qual agendamento está sendo excluído
+  const [agendamentoParaExcluir, setAgendamentoParaExcluir] = useState<string | null>(null);
 
+  const [erroConflito, setErroConflito] = useState<string | null>(null);
   const [novoAgendamento, setNovoAgendamento] = useState({
     pacienteId: "",
     hora: "",
@@ -54,13 +59,13 @@ export function Agenda() {
 
   const pacientesAtivos = pacientes.filter((p) => p.status === "ativo");
 
+  // --- LÓGICA DE CRIAÇÃO ---
   const handleSaveAppointment = (e: React.FormEvent) => {
     e.preventDefault();
     setErroConflito(null);
 
     if (!novoAgendamento.pacienteId || !novoAgendamento.hora) return;
 
-    // Validação de horário passado e conflitos (mantida a lógica original)
     const [horasInput, minutosInput] = novoAgendamento.hora
       .split(":")
       .map(Number);
@@ -114,6 +119,15 @@ export function Agenda() {
   const fecharModal = () => {
     setIsModalOpen(false);
     setErroConflito(null);
+  };
+
+  // --- NOVA LÓGICA DE EXCLUSÃO ---
+  const confirmarExclusao = () => {
+    if (agendamentoParaExcluir) {
+      removerAgendamento(agendamentoParaExcluir);
+      addToast({ type: "info", title: "Agendamento cancelado" });
+      setAgendamentoParaExcluir(null); // Fecha o modal e limpa o estado
+    }
   };
 
   const agendamentosDoDia = agendamentos
@@ -175,7 +189,7 @@ export function Agenda() {
           </div>
 
           {/* Grid de dias */}
-          <div className="grid grid-cols-7 grid-rows-6 flex-1">
+          <div className="grid grid-cols-7 grid-rows-6 flex-1 h-full">
             {days.map((day) => {
               const isSelected = isSameDay(day, selectedDate);
               const isCurrentMonth = isSameMonth(day, currentDate);
@@ -189,7 +203,6 @@ export function Agenda() {
                   key={day.toString()}
                   onClick={() => {
                     setSelectedDate(day);
-                    // LÓGICA NOVA: Redirecionar se clicar fora do mês atual
                     if (!isCurrentMonth) {
                       if (day < currentDate) {
                         prevMonth();
@@ -200,10 +213,10 @@ export function Agenda() {
                   }}
                   className={`
                       relative border-b border-r border-gray-50 p-1 cursor-pointer transition-all duration-200
-                      flex flex-col items-center justify-center
+                      flex flex-col items-center justify-center h-full w-full
                       ${
                         !isCurrentMonth
-                          ? "bg-gray-50/30 text-gray-300 opacity-30" // LÓGICA NOVA: Adicionado opacity-30
+                          ? "bg-gray-50/20 text-gray-300 opacity-40 hover:opacity-80"
                           : "bg-white active:bg-green-50"
                       }
                       ${
@@ -215,7 +228,7 @@ export function Agenda() {
                 >
                   <span
                     className={`
-                      w-8 h-8 flex items-center justify-center rounded-full text-xs md:text-sm font-medium transition-all
+                      w-8 h-8 flex items-center justify-center rounded-full text-xs md:text-sm font-medium transition-all z-10
                       ${
                         isDayToday && !isSelected
                           ? "bg-gray-900 text-white shadow-md"
@@ -232,7 +245,7 @@ export function Agenda() {
                   </span>
 
                   {temAgendamento && (
-                    <span className="w-1.5 h-1.5 rounded-full bg-primary shadow-sm mt-1"></span>
+                    <span className="absolute bottom-2 left-1/2 -translate-x-1/2 w-1.5 h-1.5 rounded-full bg-primary shadow-sm"></span>
                   )}
                 </div>
               );
@@ -299,10 +312,7 @@ export function Agenda() {
                     </div>
                   </div>
                   <button
-                    onClick={() => {
-                      removerAgendamento(agendamento.id);
-                      addToast({ type: "info", title: "Agendamento removido" });
-                    }}
+                    onClick={() => setAgendamentoParaExcluir(agendamento.id)} // Alterado: Abre modal em vez de deletar
                     className="self-start text-gray-300 hover:text-red-500 hover:bg-red-50 p-2 rounded-lg transition-all"
                     title="Cancelar agendamento"
                   >
@@ -314,7 +324,7 @@ export function Agenda() {
           </div>
         </div>
 
-        {/* --- MODAL RESPONSIVO UNIVERSAL --- */}
+        {/* --- MODAL DE NOVO AGENDAMENTO --- */}
         <Modal
           isOpen={isModalOpen}
           onClose={fecharModal}
@@ -322,7 +332,7 @@ export function Agenda() {
           size="md"
         >
           <form onSubmit={handleSaveAppointment} className="space-y-6">
-            {/* Card de Data */}
+            {/* ... Conteúdo do form mantido idêntico ... */}
             <div className="bg-green-50 p-4 rounded-xl border border-green-100 flex flex-wrap items-center gap-3">
               <div className="p-2 bg-white rounded-lg text-primary shadow-sm">
                 <CalendarIcon size={20} />
@@ -339,7 +349,6 @@ export function Agenda() {
               </div>
             </div>
 
-            {/* ALERTA DE ERRO */}
             {erroConflito && (
               <div className="bg-red-50 text-red-600 p-4 rounded-xl border border-red-100 flex items-start gap-3 text-sm animate-fade-in shadow-sm">
                 <AlertCircle size={20} className="shrink-0 mt-0.5" />
@@ -463,6 +472,45 @@ export function Agenda() {
               </button>
             </div>
           </form>
+        </Modal>
+
+        {/* --- NOVO: MODAL DE CONFIRMAÇÃO DE EXCLUSÃO --- */}
+        <Modal
+          isOpen={!!agendamentoParaExcluir}
+          onClose={() => setAgendamentoParaExcluir(null)}
+          title="Cancelar Agendamento"
+          size="md" // Tamanho ajustado
+        >
+          <div className="space-y-6">
+            <div className="bg-red-50 p-4 rounded-xl border border-red-100 flex items-start gap-4">
+              <div className="p-2 bg-white rounded-full text-red-500 shadow-sm shrink-0">
+                <AlertTriangle size={24} />
+              </div>
+              <div>
+                <h4 className="font-bold text-red-700 text-sm uppercase tracking-wide mb-1">
+                  Atenção
+                </h4>
+                <p className="text-sm font-medium text-red-600">
+                  Você realmente deseja cancelar este agendamento?
+                </p>
+              </div>
+            </div>
+
+            <div className="flex flex-col-reverse md:flex-row gap-3 pt-2">
+              <button
+                onClick={() => setAgendamentoParaExcluir(null)}
+                className="w-full md:w-auto flex-1 py-3.5 border border-gray-300 text-gray-700 rounded-xl font-bold hover:bg-gray-50 transition-colors active:bg-gray-100"
+              >
+                Não, manter
+              </button>
+              <button
+                onClick={confirmarExclusao}
+                className="w-full md:w-auto flex-1 py-3.5 bg-red-500 text-white rounded-xl font-bold hover:bg-red-600 shadow-md transition-all active:scale-95 shadow-red-200"
+              >
+                Sim, cancelar
+              </button>
+            </div>
+          </div>
         </Modal>
       </div>
     </div>
