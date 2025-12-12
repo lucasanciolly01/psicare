@@ -303,16 +303,15 @@ export function PatientDetailsModal({
         size="md"
       >
         <form onSubmit={handleAdicionarSessao} className="space-y-6">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+          <div className="grid grid-cols-2 gap-5">
             {/* TIPO DE SESSÃO */}
-            <div>
+            <div className="col-span-2 md:col-span-1">
               <label className="block text-sm font-bold text-gray-700 mb-1.5">
                 Tipo de Sessão
               </label>
               <div className="relative">
                 <select
                   required
-                  // h-12 para toque fácil, text-base para evitar zoom
                   className="w-full pl-4 pr-10 h-12 border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none bg-white transition-all appearance-none text-base text-gray-700"
                   value={novaSessao.tipo}
                   onChange={(e) =>
@@ -331,22 +330,30 @@ export function PatientDetailsModal({
               </div>
             </div>
 
-            {/* DATA */}
-            <div>
+            {/* DATA - COM AJUSTE RESPONSIVO DO ÍCONE */}
+            <div className="col-span-2 md:col-span-1">
               <label className="block text-sm font-bold text-gray-700 mb-1.5">
                 Data
               </label>
               <div className="relative">
-                {/* Ícone movido para esquerda para evitar sobreposição no iOS */}
+                {/* LÓGICA DO ÍCONE:
+            - Mobile (Padrão): left-3 (Esquerda)
+            - Desktop (md): right-3 (Direita) 
+          */}
                 <CalendarIcon
                   size={18}
-                  className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none"
+                  className="absolute top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none left-3 md:left-auto md:right-3"
                 />
+
                 <input
                   required
                   type="date"
-                  // pl-10 para dar espaço ao ícone, h-12, text-base
-                  className="w-full pl-10 pr-4 h-12 border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all text-gray-700 bg-white text-base appearance-none"
+                  /* LÓGICA DO PADDING:
+              - Mobile (pl-10): Espaço na esquerda para o ícone
+              - Desktop (md:pl-4): Espaço normal na esquerda
+              - Desktop (md:pr-10): Espaço na direita para o ícone
+            */
+                  className="w-full h-12 pl-10 pr-4 md:pl-4 md:pr-10 border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all text-gray-700 bg-white text-base appearance-none"
                   value={novaSessao.data}
                   max={new Date().toISOString().split("T")[0]}
                   onChange={(e) =>
@@ -357,11 +364,11 @@ export function PatientDetailsModal({
             </div>
 
             {/* STATUS DA SESSÃO */}
-            <div className="md:col-span-2">
+            <div className="col-span-2">
               <label className="block text-sm font-bold text-gray-700 mb-2">
                 Status da Sessão
               </label>
-              {/* Grid adaptável: 2 colunas no mobile (botões grandes), 4 no desktop */}
+              {/* Grid: 2 colunas no mobile, 4 no desktop */}
               <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
                 {["compareceu", "faltou", "remarcada", "cancelada"].map(
                   (status) => {
@@ -376,7 +383,6 @@ export function PatientDetailsModal({
                             statusSessao: status as Sessao["statusSessao"],
                           })
                         }
-                        // h-auto com min-h-[48px] para garantir área de toque
                         className={`
                     flex flex-col items-center justify-center gap-1 py-3 px-2 rounded-xl transition-all duration-200 border min-h-[48px] active:scale-95
                     ${
@@ -405,7 +411,7 @@ export function PatientDetailsModal({
             </div>
 
             {/* EVOLUÇÃO / ANOTAÇÕES */}
-            <div className="md:col-span-2">
+            <div className="col-span-2">
               <label className="text-sm font-bold text-gray-700 mb-1.5 flex flex-col md:flex-row md:items-center justify-between gap-1">
                 <span>Evolução / Anotações</span>
                 <span className="text-xs font-normal text-gray-400">
@@ -414,7 +420,6 @@ export function PatientDetailsModal({
               </label>
               <textarea
                 required
-                // p-4 para conforto visual, text-base para leitura fácil
                 className="w-full p-4 border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none h-40 resize-none text-base leading-relaxed transition-all shadow-sm appearance-none"
                 placeholder="Registre aqui o que foi discutido, intervenções realizadas, humor do paciente e planejamento para a próxima sessão..."
                 value={novaSessao.evolucao}
@@ -425,7 +430,7 @@ export function PatientDetailsModal({
             </div>
           </div>
 
-          {/* BOTÕES DE AÇÃO: Reversos no mobile para ergonomia */}
+          {/* BOTÕES DE AÇÃO */}
           <div className="pt-2 flex flex-col-reverse md:flex-row gap-3">
             <button
               type="button"
