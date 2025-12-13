@@ -6,7 +6,6 @@ import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
 
-// Schema mantido, mas refinado
 const cadastroSchema = z.object({
   nome: z.string().min(3, 'O nome deve ter pelo menos 3 caracteres'),
   email: z.string().email('Formato de e-mail inválido'),
@@ -42,15 +41,22 @@ export function Cadastro() {
   };
 
   return (
-    // MUDANÇA 1: Estrutura Mobile-First.
-    // Removemos 'items-center' em telas pequenas para evitar problemas com teclado virtual.
-    // 'min-h-[100dvh]' garante altura total, mas 'py-8' permite scroll se necessário.
-    <div className="min-h-[100dvh] w-full bg-gray-50 flex flex-col justify-center sm:py-12 px-4 sm:px-6 lg:px-8 pb-safe">
+    // CONTAINER EXTERNO:
+    // min-h-[100dvh]: Garante altura total da tela
+    // flex-col justify-center items-center: Centraliza tudo perfeitamente
+    // px-4: Cria uma margem de segurança nas laterais para celulares pequenos
+    // py-8: Garante espaço em cima e embaixo para não colar nas bordas verticais
+    <div className="min-h-[100dvh] w-full bg-gray-50 flex flex-col justify-center items-center py-8 px-4 pb-safe">
       
-      {/* Container principal com largura máxima controlada */}
-      <div className="w-full max-w-md mx-auto bg-white sm:rounded-3xl sm:shadow-xl sm:border sm:border-gray-100 overflow-hidden">
+      {/* CARTÃO DO FORMULÁRIO:
+          w-full: Tenta ocupar 100% do espaço (bom para mobile)
+          max-w-[480px]: Trava a largura máxima (perfeito para Desktop/Tablet)
+          rounded-3xl: Borda arredondada FORÇADA em todas as telas (Mobile e Desktop)
+          shadow-xl: Sombra para dar profundidade
+      */}
+      <div className="w-full max-w-[480px] bg-white rounded-3xl shadow-xl border border-gray-100 overflow-hidden">
         
-        <div className="p-6 sm:p-8 space-y-6">
+        <div className="p-6 sm:p-10 space-y-6">
           <div className="text-center space-y-2">
             <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 tracking-tight">
               Crie sua conta
@@ -72,7 +78,7 @@ export function Cadastro() {
                 <input 
                   id="nome"
                   type="text" 
-                  autoComplete="name" // Essencial para auto-fill
+                  autoComplete="name"
                   placeholder="Nome Completo"
                   className={`block w-full pl-12 pr-4 py-3.5 bg-gray-50/50 border rounded-xl outline-none transition-all text-gray-900 text-base placeholder:text-gray-400
                     ${errors.nome 
@@ -81,11 +87,10 @@ export function Cadastro() {
                     }`}
                   {...register('nome')}
                   aria-invalid={!!errors.nome}
-                  aria-describedby={errors.nome ? "nome-error" : undefined}
                 />
               </div>
               {errors.nome && (
-                <p id="nome-error" className="flex items-center gap-1 text-xs text-red-500 font-medium ml-1 animate-fadeIn">
+                <p className="flex items-center gap-1 text-xs text-red-500 font-medium ml-1 animate-fadeIn">
                   <AlertCircle size={12} /> {errors.nome.message}
                 </p>
               )}
@@ -101,7 +106,7 @@ export function Cadastro() {
                 <input 
                   id="email"
                   type="email"
-                  inputMode="email" // Abre teclado com @ e .com
+                  inputMode="email"
                   autoComplete="email"
                   placeholder="E-mail profissional"
                   className={`block w-full pl-12 pr-4 py-3.5 bg-gray-50/50 border rounded-xl outline-none transition-all text-gray-900 text-base placeholder:text-gray-400
@@ -130,7 +135,7 @@ export function Cadastro() {
                 <input 
                   id="senha"
                   type={showPassword ? "text" : "password"}
-                  autoComplete="new-password" // Sugere senha forte (iOS/Android)
+                  autoComplete="new-password"
                   placeholder="Senha"
                   className={`block w-full pl-12 pr-12 py-3.5 bg-gray-50/50 border rounded-xl outline-none transition-all text-gray-900 text-base placeholder:text-gray-400
                     ${errors.senha 
@@ -140,12 +145,10 @@ export function Cadastro() {
                   {...register('senha')}
                   aria-invalid={!!errors.senha}
                 />
-                {/* Toggle Password Visibility - Touch Target otimizado */}
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
                   className="absolute right-3 top-1/2 -translate-y-1/2 p-2 text-gray-400 hover:text-gray-600 focus:outline-none focus:text-primary"
-                  aria-label={showPassword ? "Ocultar senha" : "Mostrar senha"}
                 >
                   {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
                 </button>
@@ -185,7 +188,7 @@ export function Cadastro() {
               )}
             </div>
 
-            {/* Termos: Área de clique expandida */}
+            {/* Termos */}
             <div className="pt-2">
               <label className="flex items-start gap-3 relative cursor-pointer group">
                 <div className="flex items-center h-6">
