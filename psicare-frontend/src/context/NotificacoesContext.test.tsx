@@ -1,11 +1,12 @@
-// 1. Importação explícita para garantir que o TS reconheça os tipos "toBeInTheDocument", etc.
 import '@testing-library/jest-dom'; 
-
-import { render, screen, act } from '@testing-library/react'; // CORREÇÃO: Removido 'renderHook'
+import { render, screen, act } from '@testing-library/react';
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { NotificacoesProvider, useNotificacoes } from './NotificacoesContext';
 import * as PacientesContext from './PacientesContext';
 import * as AgendamentosContext from './AgendamentosContext';
+
+// Tipo auxiliar para não usar 'any'
+type NotificacoesHookType = ReturnType<typeof useNotificacoes>;
 
 // Mocks
 const usePacientesMock = vi.fn();
@@ -21,7 +22,8 @@ vi.mock('./AgendamentosContext', async (importOriginal) => {
   return { ...actual, useAgendamentos: () => useAgendamentosMock() };
 });
 
-function TestComponent({ onMount }: { onMount?: (hook: any) => void }) {
+// Componente de teste tipado corretamente
+function TestComponent({ onMount }: { onMount?: (hook: NotificacoesHookType) => void }) {
   const hook = useNotificacoes();
   if (onMount) onMount(hook);
   
@@ -90,8 +92,8 @@ describe('NotificacoesContext', () => {
   });
 
   it('deve marcar notificações como lidas', () => {
-    // Usamos uma ref para capturar o hook, mas validamos pela UI para evitar problemas de atualização assíncrona
-    let hookValues: any;
+    // Correção do 'any': tipagem explícita ou inferida
+    let hookValues: NotificacoesHookType | undefined;
     
     render(
       <NotificacoesProvider>
@@ -101,12 +103,14 @@ describe('NotificacoesContext', () => {
 
     // Adiciona
     act(() => {
-      hookValues.adicionarNotificacao({ titulo: 'Teste', mensagem: 'M', tipo: 'sistema' });
+      hookValues?.adicionarNotificacao({ titulo: 'Teste', mensagem: 'M', tipo: 'sistema' });
     });
     
     // Marca como lida
     act(() => {
-      hookValues.marcarComoLida(hookValues.notificacoes[0].id);
+      if (hookValues && hookValues.notificacoes.length > 0) {
+        hookValues.marcarComoLida(hookValues.notificacoes[0].id);
+      }
     });
 
     expect(screen.getByText(/Teste - Lida/)).toBeInTheDocument();

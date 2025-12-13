@@ -1,21 +1,14 @@
-// src/pages/Perfil.tsx
 import { useState, useEffect, type FormEvent, useRef } from "react";
 import { useAuth } from "../context/AuthContext";
 import { useToast } from "../context/ToastContext";
 import { User, Phone, Mail, Save, Camera, Trash2, AlertTriangle } from "lucide-react";
 import { ImageCropperModal } from "../components/ImageCropperModal"; 
 
-// Função auxiliar para formatar telefone (definida fora para performance)
 const formatPhoneNumber = (value: string) => {
   if (!value) return "";
-  
-  // 1. Remove tudo que não é número
   const numbers = value.replace(/\D/g, "");
-
-  // 2. Limita a 11 dígitos (DDD + 9 dígitos)
   const truncated = numbers.slice(0, 11);
 
-  // 3. Aplica a máscara progressivamente
   if (truncated.length <= 2) {
     return truncated.replace(/(\d{0,2})/, "($1");
   } else if (truncated.length <= 7) {
@@ -34,34 +27,33 @@ export function Perfil() {
   const [email, setEmail] = useState("");
   const [telefone, setTelefone] = useState("");
 
-  // Estados para o Cropper (Corte de Imagem)
   const [tempImageSrc, setTempImageSrc] = useState<string | null>(null);
   const [showCropper, setShowCropper] = useState(false);
-
-  // Estado para o Modal de Confirmação de Exclusão
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
   useEffect(() => {
     if (usuario) {
-      setNome(usuario.nome);
-      setEmail(usuario.email);
-      // Formata o telefone ao carregar os dados do usuário
-      setTelefone(formatPhoneNumber(usuario.telefone));
+      // === CORREÇÃO: Só atualiza o estado se for diferente para evitar loops ===
+      if (usuario.nome !== nome) setNome(usuario.nome);
+      if (usuario.email !== email) setEmail(usuario.email);
+      
+      const telFormatado = formatPhoneNumber(usuario.telefone);
+      if (telFormatado !== telefone) setTelefone(telFormatado);
     }
-  }, [usuario]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [usuario]); // Mantivemos o disable aqui pois só queremos atualizar quando 'usuario' mudar, não os estados locais.
 
   const handleSubmit = (e: FormEvent) => {
     e.preventDefault();
     try {
-      // Salva os dados (removemos a formatação antes de enviar se o backend preferir apenas números, 
-      // mas aqui mantivemos conforme o estado para consistência visual)
       atualizarPerfil({ nome, email, telefone });
       addToast({
         type: 'success',
         title: 'Perfil atualizado',
         description: 'Seus dados foram salvos com sucesso.'
       });
-    } catch (error) {
+    // === CORREÇÃO: Removido 'error' não usado ===
+    } catch {
       addToast({
         type: 'error',
         title: 'Erro ao atualizar',
@@ -70,7 +62,6 @@ export function Perfil() {
     }
   };
 
-  // Handler específico para formatar enquanto digita
   const handlePhoneChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const formatted = formatPhoneNumber(e.target.value);
     setTelefone(formatted);
@@ -99,7 +90,8 @@ export function Perfil() {
         title: 'Foto atualizada',
         description: 'Sua nova foto de perfil foi ajustada e salva.'
       });
-    } catch (error) {
+    // === CORREÇÃO: Removido 'error' não usado ===
+    } catch {
       addToast({ type: 'error', title: 'Erro', description: 'Falha ao salvar a imagem.' });
     }
   };
@@ -118,8 +110,6 @@ export function Perfil() {
 
   return (
     <div className="p-4 md:p-6 animate-fade-in relative">
-      
-      {/* 1. Modal do Cropper */}
       {showCropper && tempImageSrc && (
         <ImageCropperModal
           imageSrc={tempImageSrc}
@@ -131,21 +121,17 @@ export function Perfil() {
         />
       )}
 
-      {/* 2. Modal de Confirmação de Exclusão */}
       {showDeleteConfirm && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 animate-fade-in backdrop-blur-sm">
           <div className="bg-white rounded-xl shadow-2xl w-full max-w-sm overflow-hidden scale-100 transition-transform">
-            
             <div className="p-6 flex flex-col items-center text-center">
               <div className="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center mb-4">
                 <AlertTriangle className="text-red-600" size={24} />
               </div>
-              
               <h3 className="text-lg font-bold text-gray-900 mb-2">Remover foto?</h3>
               <p className="text-gray-500 text-sm mb-6">
                 Tem certeza que deseja remover sua foto de perfil? Esta ação voltará a exibir suas iniciais.
               </p>
-
               <div className="flex gap-3 w-full">
                 <button
                   onClick={() => setShowDeleteConfirm(false)}
@@ -169,7 +155,6 @@ export function Perfil() {
 
       <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
         <div className="h-32 bg-gradient-to-r from-green-50 to-primary/10"></div>
-
         <div className="px-6 md:px-8 pb-8">
           <div className="relative -mt-16 mb-8 flex justify-center md:justify-start w-fit mx-auto md:mx-0">
             <div className="relative group">
@@ -180,7 +165,6 @@ export function Perfil() {
                   <span className="text-4xl font-bold text-gray-300">{usuario.iniciais}</span>
                 )}
               </div>
-
               <div className="absolute -bottom-2 -right-2 flex gap-2 z-20">
                 <button 
                   onClick={() => fileInputRef.current?.click()}
@@ -196,7 +180,6 @@ export function Perfil() {
                     onChange={onFileSelect} 
                   />
                 </button>
-
                 {usuario.foto && (
                    <button 
                    onClick={() => setShowDeleteConfirm(true)}
@@ -224,22 +207,20 @@ export function Perfil() {
                   />
                 </div>
               </div>
-
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Telefone</label>
                 <div className="relative">
                   <Phone size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
                   <input
-                    type="tel" // Alterado para 'tel' para abrir teclado numérico no mobile
+                    type="tel"
                     value={telefone}
-                    onChange={handlePhoneChange} // Usando o novo handler com máscara
-                    maxLength={15} // Limite (11 dígitos + formatação)
+                    onChange={handlePhoneChange}
+                    maxLength={15}
                     placeholder="(00) 00000-0000"
                     className="w-full pl-10 pr-3 py-2.5 border border-gray-200 rounded-lg focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all"
                   />
                 </div>
               </div>
-
               <div className="md:col-span-2">
                 <label className="block text-sm font-medium text-gray-700 mb-1">E-mail</label>
                 <div className="relative">
@@ -253,9 +234,7 @@ export function Perfil() {
                 </div>
               </div>
             </div>
-
             <hr className="border-gray-100 my-6" />
-
             <div className="flex justify-end">
               <button type="submit" className="w-full md:w-auto bg-primary hover:bg-green-700 text-white px-6 py-2.5 rounded-lg font-medium flex items-center justify-center gap-2 shadow-sm transition-all hover:-translate-y-0.5 active:scale-95">
                 <Save size={18} />

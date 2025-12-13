@@ -1,3 +1,4 @@
+/* eslint-disable react-refresh/only-export-components */
 import { createContext, useContext, useState, useCallback, type ReactNode } from 'react';
 import { Toast, type ToastMessage, type ToastType } from '../components/ui/Toast';
 

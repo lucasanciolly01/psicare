@@ -1,3 +1,4 @@
+/* eslint-disable react-refresh/only-export-components */
 import { createContext, useContext, useState, useEffect, type ReactNode } from 'react';
 import { parseISO, isToday, isThisWeek, isAfter, subWeeks, startOfWeek, endOfWeek, isWithinInterval } from 'date-fns';
 
@@ -16,7 +17,7 @@ interface AgendamentosContextData {
   removerAgendamento: (id: string) => void;
   sessoesHoje: number;
   sessoesSemana: number;
-  crescimentoSemanal: number; // Nova métrica exportada
+  crescimentoSemanal: number;
   proximosAgendamentos: Agendamento[];
 }
 
@@ -26,7 +27,6 @@ export function AgendamentosProvider({ children }: { children: ReactNode }) {
   const [agendamentos, setAgendamentos] = useState<Agendamento[]>(() => {
     const saved = localStorage.getItem('psicare_agendamentos_v2');
     return saved ? JSON.parse(saved) : [
-      // Dados fictícios iniciais para teste, caso não haja nada salvo
       { id: '1', data: new Date().toISOString().split('T')[0], hora: '09:00', pacienteNome: 'Ana Souza', tipo: 'Consulta', status: 'concluido' }
     ];
   });
@@ -58,7 +58,6 @@ export function AgendamentosProvider({ children }: { children: ReactNode }) {
     isThisWeek(parseISO(a.data)) && a.status !== 'cancelado'
   ).length;
 
-  // Cálculo: Comparar volume desta semana com a semana passada
   const hoje = new Date();
   const inicioSemanaPassada = startOfWeek(subWeeks(hoje, 1));
   const fimSemanaPassada = endOfWeek(subWeeks(hoje, 1));
@@ -66,14 +65,14 @@ export function AgendamentosProvider({ children }: { children: ReactNode }) {
   const sessoesSemanaPassada = agendamentos.filter(a => {
       const dataSessao = parseISO(a.data);
       return isWithinInterval(dataSessao, { start: inicioSemanaPassada, end: fimSemanaPassada }) 
-             && a.status !== 'cancelado';
+              && a.status !== 'cancelado';
   }).length;
 
   let crescimentoSemanal = 0;
   if (sessoesSemanaPassada > 0) {
       crescimentoSemanal = Math.round(((sessoesSemana - sessoesSemanaPassada) / sessoesSemanaPassada) * 100);
   } else if (sessoesSemana > 0) {
-      crescimentoSemanal = 100; // Crescimento total se antes era zero
+      crescimentoSemanal = 100;
   }
 
   const proximosAgendamentos = agendamentos

@@ -51,7 +51,7 @@ export default function Cadastro() {
   const handleCadastro = async (data: CadastroSchema) => {
     try {
       await new Promise(resolve => setTimeout(resolve, 1000));
-      login(data.email);
+      login(data.email, data.senha);
       addToast({
         type: 'success',
         title: 'Conta criada com sucesso!',
