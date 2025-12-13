@@ -6,20 +6,21 @@ import { AuthProvider } from './context/AuthContext';
 import { ToastProvider } from './context/ToastContext';
 import { NotificacoesProvider } from './context/NotificacoesContext';
 
-// === CORREÇÃO DOS IMPORTS (ADAPTADOR PARA NAMED EXPORTS) ===
-// O .then(module => ({ default: module.NomeComponente })) ensina ao React
-// qual parte do arquivo ele deve renderizar.
+// === CONFIGURAÇÃO DE IMPORTS (LAZY LOADING) ===
 
+// 1. Componentes com Exportação NOMEADA (export function Nome)
+// Precisam do adaptador: .then(module => ({ default: module.Nome }))
 const MainLayout = lazy(() => import('./components/layout/MainLayout').then(module => ({ default: module.MainLayout })));
 const Dashboard = lazy(() => import('./pages/Dashboard').then(module => ({ default: module.Dashboard })));
+const Login = lazy(() => import('./pages/Login').then(module => ({ default: module.Login })));
+
+// Assumindo que as outras páginas internas seguem o padrão do Dashboard (Named Export):
 const Agenda = lazy(() => import('./pages/Agenda').then(module => ({ default: module.Agenda })));
 const Pacientes = lazy(() => import('./pages/Pacientes').then(module => ({ default: module.Pacientes })));
 const Perfil = lazy(() => import('./pages/Perfil').then(module => ({ default: module.Perfil })));
-const Login = lazy(() => import('./pages/Login').then(module => ({ default: module.Login })));
 
-// OBS: O Cadastro parecia ter um "export default" no código que você mandou antes.
-// Se ele der erro, use a mesma lógica dos de cima: .then(m => ({ default: m.Cadastro }))
-// Por enquanto, vou manter o padrão simples para ele, ou padronizar como os outros se necessário.
+// 2. Componentes com Exportação PADRÃO (export default function Nome)
+// Importação direta
 const Cadastro = lazy(() => import('./pages/Cadastro')); 
 
 function App() {
