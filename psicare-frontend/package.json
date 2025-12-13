@@ -8,7 +8,8 @@
     "build": "tsc -b && vite build",
     "lint": "eslint .",
     "preview": "vite preview",
-    "test": "vitest"
+    "test": "vitest",
+    "analyze": "npx vite-bundle-visualizer"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.2.2",
