@@ -9,19 +9,17 @@ import { ptBR } from 'date-fns/locale';
 
 export function Dashboard() {
   const { usuario } = useAuth();
-  
-  // 1. CORREÇÃO: Removemos 'totalAtivos' do contexto (pois não existe lá)
   const { pacientes } = usePacientes();
-  const { sessoesHoje, sessoesSemana, proximosAgendamentos } = useAgendamentos();
+  
+  // Extraímos 'crescimentoSemanal' que calculamos no Contexto
+  const { sessoesHoje, sessoesSemana, crescimentoSemanal, proximosAgendamentos } = useAgendamentos();
 
-  // 2. CORREÇÃO: Calculamos o total aqui mesmo ("quantos pacientes têm status 'ativo'?")
   const totalAtivos = pacientes.filter(p => p.status === 'ativo').length;
-
   const pacientesRecentes = pacientes.slice(0, 4);
 
   return (
     <div className="space-y-8">
-      {/* Header e Botão */}
+      {/* Header */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-end gap-4">
         <div>
           <h1 className="text-3xl font-bold text-gray-800">
@@ -36,31 +34,39 @@ export function Dashboard() {
         </Link>
       </div>
 
-      {/* Grid de Cards */}
+      {/* Grid de Cards - CORRIGIDO AQUI */}
       <section className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        
+        {/* Card 1: Pacientes - Usa 'description' pois não temos dados históricos de cadastro */}
         <StatCard 
           title="Pacientes Ativos" 
           value={totalAtivos} 
           icon={Users} 
           color="blue"
-          trend={`Total de ${pacientes.length} cadastrados`}
+          description={`De ${pacientes.length} totais`} 
         />
+        
+        {/* Card 2: Hoje - Informativo simples */}
         <StatCard 
           title="Sessões Hoje" 
           value={sessoesHoje} 
           icon={CalendarCheck} 
           color="green"
-          trend="Agendadas para hoje"
+          description={format(new Date(), "'Dia' dd 'de' MMMM", { locale: ptBR })}
         />
+        
+        {/* Card 3: Semana - Usa 'trendValue' pois calculamos o crescimento real */}
         <StatCard 
           title="Sessões na Semana" 
           value={sessoesSemana} 
           icon={Clock} 
           color="purple"
-          trend="Total desta semana"
+          trendValue={crescimentoSemanal}
+          trendLabel="vs. semana passada"
         />
       </section>
 
+      {/* Restante do layout (Listas) permanece igual */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         
         {/* LISTA DE PRÓXIMOS ATENDIMENTOS */}

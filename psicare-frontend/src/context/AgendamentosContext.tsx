@@ -1,11 +1,10 @@
 import { createContext, useContext, useState, useEffect, type ReactNode } from 'react';
-import { parseISO, isToday, isThisWeek, isAfter } from 'date-fns';
+import { parseISO, isToday, isThisWeek, isAfter, subWeeks, startOfWeek, endOfWeek, isWithinInterval } from 'date-fns';
 
-// 1. Definição dos Tipos
 export interface Agendamento {
   id: string;
-  data: string; // YYYY-MM-DD
-  hora: string; // HH:mm
+  data: string;
+  hora: string;
   pacienteNome: string; 
   tipo: string;
   status: 'agendado' | 'concluido' | 'cancelado';
@@ -17,6 +16,7 @@ interface AgendamentosContextData {
   removerAgendamento: (id: string) => void;
   sessoesHoje: number;
   sessoesSemana: number;
+  crescimentoSemanal: number; // Nova métrica exportada
   proximosAgendamentos: Agendamento[];
 }
 
@@ -26,8 +26,8 @@ export function AgendamentosProvider({ children }: { children: ReactNode }) {
   const [agendamentos, setAgendamentos] = useState<Agendamento[]>(() => {
     const saved = localStorage.getItem('psicare_agendamentos_v2');
     return saved ? JSON.parse(saved) : [
-      { id: '1', data: new Date().toISOString().split('T')[0], hora: '09:00', pacienteNome: 'Ana Souza', tipo: 'Consulta', status: 'concluido' },
-      { id: '2', data: new Date().toISOString().split('T')[0], hora: '14:00', pacienteNome: 'Carlos Mendes', tipo: 'Retorno', status: 'agendado' }
+      // Dados fictícios iniciais para teste, caso não haja nada salvo
+      { id: '1', data: new Date().toISOString().split('T')[0], hora: '09:00', pacienteNome: 'Ana Souza', tipo: 'Consulta', status: 'concluido' }
     ];
   });
 
@@ -48,7 +48,8 @@ export function AgendamentosProvider({ children }: { children: ReactNode }) {
     setAgendamentos(state => state.filter(a => a.id !== id));
   };
 
-  // --- KPIs ---
+  // --- CÁLCULOS DE MÉTRICAS ---
+  
   const sessoesHoje = agendamentos.filter(a => 
     isToday(parseISO(a.data)) && a.status !== 'cancelado'
   ).length;
@@ -57,28 +58,42 @@ export function AgendamentosProvider({ children }: { children: ReactNode }) {
     isThisWeek(parseISO(a.data)) && a.status !== 'cancelado'
   ).length;
 
+  // Cálculo: Comparar volume desta semana com a semana passada
+  const hoje = new Date();
+  const inicioSemanaPassada = startOfWeek(subWeeks(hoje, 1));
+  const fimSemanaPassada = endOfWeek(subWeeks(hoje, 1));
+
+  const sessoesSemanaPassada = agendamentos.filter(a => {
+      const dataSessao = parseISO(a.data);
+      return isWithinInterval(dataSessao, { start: inicioSemanaPassada, end: fimSemanaPassada }) 
+             && a.status !== 'cancelado';
+  }).length;
+
+  let crescimentoSemanal = 0;
+  if (sessoesSemanaPassada > 0) {
+      crescimentoSemanal = Math.round(((sessoesSemana - sessoesSemanaPassada) / sessoesSemanaPassada) * 100);
+  } else if (sessoesSemana > 0) {
+      crescimentoSemanal = 100; // Crescimento total se antes era zero
+  }
+
   const proximosAgendamentos = agendamentos
     .filter(a => {
        const dataAgendamento = parseISO(a.data + 'T' + a.hora);
        return isAfter(dataAgendamento, new Date()) || isToday(parseISO(a.data));
     })
-    .sort((a, b) => {
-       return new Date(a.data + 'T' + a.hora).getTime() - new Date(b.data + 'T' + b.hora).getTime();
-    })
+    .sort((a, b) => new Date(a.data + 'T' + a.hora).getTime() - new Date(b.data + 'T' + b.hora).getTime())
     .slice(0, 5);
 
   return (
     <AgendamentosContext.Provider value={{ 
       agendamentos, adicionarAgendamento, removerAgendamento,
-      sessoesHoje, sessoesSemana, proximosAgendamentos
+      sessoesHoje, sessoesSemana, crescimentoSemanal, proximosAgendamentos
     }}>
       {children}
     </AgendamentosContext.Provider>
   );
 }
 
-// ADICIONE ESTA LINHA ABAIXO PARA O LINT NÃO RECLAMAR:
-// eslint-disable-next-line react-refresh/only-export-components
 export function useAgendamentos() {
   return useContext(AgendamentosContext);
 }
