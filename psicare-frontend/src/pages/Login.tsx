@@ -158,7 +158,7 @@ export function Login() {
               <p className="text-sm text-gray-600">
                 Não tem uma conta? 
                 <Link to="/cadastro" className="text-primary font-bold hover:underline ml-2 transition-colors">
-                  Cadastre-se gratuitamente
+                  Cadastre-se
                 </Link>
               </p>
             </div>
