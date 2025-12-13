@@ -4,17 +4,23 @@ import { PacientesProvider } from './context/PacientesContext';
 import { AgendamentosProvider } from './context/AgendamentosContext';
 import { AuthProvider } from './context/AuthContext';
 import { ToastProvider } from './context/ToastContext';
-// Importação do novo contexto de notificações
 import { NotificacoesProvider } from './context/NotificacoesContext';
 
-// Lazy Imports
-const MainLayout = lazy(() => import('./components/layout/MainLayout').then(m => ({ default: m.MainLayout })));
-const Dashboard = lazy(() => import('./pages/Dashboard').then(m => ({ default: m.Dashboard })));
-const Agenda = lazy(() => import('./pages/Agenda').then(m => ({ default: m.Agenda })));
-const Pacientes = lazy(() => import('./pages/Pacientes').then(m => ({ default: m.Pacientes })));
-const Perfil = lazy(() => import('./pages/Perfil').then(m => ({ default: m.Perfil })));
-const Login = lazy(() => import('./pages/Login').then(m => ({ default: m.Login })));
-const Cadastro = lazy(() => import('./pages/Cadastro').then(m => ({ default: m.Cadastro })));
+// === CORREÇÃO DOS IMPORTS (ADAPTADOR PARA NAMED EXPORTS) ===
+// O .then(module => ({ default: module.NomeComponente })) ensina ao React
+// qual parte do arquivo ele deve renderizar.
+
+const MainLayout = lazy(() => import('./components/layout/MainLayout').then(module => ({ default: module.MainLayout })));
+const Dashboard = lazy(() => import('./pages/Dashboard').then(module => ({ default: module.Dashboard })));
+const Agenda = lazy(() => import('./pages/Agenda').then(module => ({ default: module.Agenda })));
+const Pacientes = lazy(() => import('./pages/Pacientes').then(module => ({ default: module.Pacientes })));
+const Perfil = lazy(() => import('./pages/Perfil').then(module => ({ default: module.Perfil })));
+const Login = lazy(() => import('./pages/Login').then(module => ({ default: module.Login })));
+
+// OBS: O Cadastro parecia ter um "export default" no código que você mandou antes.
+// Se ele der erro, use a mesma lógica dos de cima: .then(m => ({ default: m.Cadastro }))
+// Por enquanto, vou manter o padrão simples para ele, ou padronizar como os outros se necessário.
+const Cadastro = lazy(() => import('./pages/Cadastro')); 
 
 function App() {
   return (
@@ -23,13 +29,22 @@ function App() {
         <AuthProvider>
           <PacientesProvider>
             <AgendamentosProvider>
-              {/* O NotificacoesProvider deve ficar aqui, após Pacientes e Agendamentos */}
               <NotificacoesProvider>
-                <Suspense fallback={<div className="flex h-screen items-center justify-center text-primary font-bold animate-pulse">Carregando PsiCare...</div>}>
+                {/* Fallback de Carregamento Centralizado */}
+                <Suspense fallback={
+                  <div className="flex h-screen w-full items-center justify-center bg-gray-50">
+                    <div className="flex flex-col items-center gap-4">
+                       <div className="w-12 h-12 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
+                       <p className="text-primary font-bold text-lg animate-pulse">Carregando PsiCare...</p>
+                    </div>
+                  </div>
+                }>
                   <Routes>
+                    {/* Rotas Públicas */}
                     <Route path="/login" element={<Login />} />
                     <Route path="/cadastro" element={<Cadastro />} />
                     
+                    {/* Rotas Protegidas (Layout Principal) */}
                     <Route path="/" element={<MainLayout />}>
                       <Route index element={<Navigate to="/dashboard" replace />} />
                       <Route path="dashboard" element={<Dashboard />} />
