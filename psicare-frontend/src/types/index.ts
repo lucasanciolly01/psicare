@@ -32,3 +32,16 @@ export interface Usuario {
   iniciais: string;
   foto?: string; // Base64 da imagem
 }
+
+export type TipoNotificacao = 'agendamento' | 'aniversario' | 'financeiro' | 'sistema';
+
+export interface Notificacao {
+  id: string;
+  titulo: string;
+  mensagem: string;
+  tipo: TipoNotificacao;
+  lida: boolean;
+  data: string; // ISO String
+  link?: string; // Para navegação inteligente
+  pacienteId?: string; // Para ações rápidas
+}
