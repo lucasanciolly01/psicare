@@ -1,3 +1,5 @@
+// src/components/layout/Header.tsx
+
 import { Bell, Menu } from 'lucide-react'; 
 import { useAuth } from '../../context/AuthContext';
 
@@ -32,8 +34,17 @@ export function Header({ onMenuClick }: HeaderProps) {
           <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-red-500 rounded-full border-2 border-white"></span>
         </button>
         
-        <div className="w-9 h-9 rounded-full bg-primary/10 flex items-center justify-center text-primary font-bold text-sm border border-primary/20">
-          {usuario?.iniciais}
+        {/* LÓGICA DO AVATAR ATUALIZADA */}
+        <div className="w-9 h-9 rounded-full bg-primary/10 flex items-center justify-center text-primary font-bold text-sm border border-primary/20 overflow-hidden relative">
+          {usuario?.foto ? (
+            <img 
+              src={usuario.foto} 
+              alt="Foto de perfil" 
+              className="w-full h-full object-cover"
+            />
+          ) : (
+            <span>{usuario?.iniciais}</span>
+          )}
         </div>
       </div>
     </header>

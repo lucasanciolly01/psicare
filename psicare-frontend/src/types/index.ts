@@ -1,4 +1,5 @@
-// Definição do Paciente
+// src/types/index.ts
+
 export interface Paciente {
   id: string;
   nome: string;
@@ -13,7 +14,6 @@ export interface Paciente {
   avatarColor?: string;
 }
 
-// Definição do Agendamento
 export interface Agendamento {
   id: string;
   pacienteId: string;
@@ -23,10 +23,12 @@ export interface Agendamento {
   observacoes?: string;
 }
 
-// Definição do Usuário
+// ATUALIZAÇÃO: Adicionadas propriedades foto e telefone
 export interface Usuario {
   id: string;
   nome: string;
   email: string;
+  telefone: string;
   iniciais: string;
+  foto?: string; // Base64 da imagem
 }

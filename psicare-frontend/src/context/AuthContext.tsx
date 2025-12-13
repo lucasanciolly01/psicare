@@ -1,20 +1,18 @@
+// src/context/AuthContext.tsx
+
 import { createContext, useContext, useState, useEffect, type ReactNode } from 'react';
 import { useNavigate } from 'react-router-dom';
-
-interface Usuario {
-  nome: string;
-  email: string;
-  telefone: string;
-  foto?: string; // Base64 da imagem
-  iniciais: string;
-}
+import { type Usuario } from '../types';
 
 interface AuthContextData {
   usuario: Usuario | null;
   login: (email: string) => void;
   logout: () => void;
   atualizarPerfil: (dados: Partial<Usuario>) => void;
-  atualizarFoto: (file: File) => void;
+  // ATUALIZADO: Agora aceita a string base64 pronta
+  salvarFotoCortada: (base64Image: string) => void;
+  // NOVO: Função para remover
+  removerFoto: () => void;
 }
 
 const AuthContext = createContext<AuthContextData>({} as AuthContextData);
@@ -22,10 +20,10 @@ const AuthContext = createContext<AuthContextData>({} as AuthContextData);
 export function AuthProvider({ children }: { children: ReactNode }) {
   const navigate = useNavigate();
 
-  // CORREÇÃO: Inicializa como null se não houver dados salvos (removemos o mock)
   const [usuario, setUsuario] = useState<Usuario | null>(() => {
     const saved = localStorage.getItem('psicare_auth_v2');
-    return saved ? JSON.parse(saved) : null; 
+    // Use 'as Usuario' para garantir a tipagem correta ao recuperar
+    return saved ? (JSON.parse(saved) as Usuario) : null; 
   });
 
   useEffect(() => {
@@ -37,17 +35,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [usuario]);
 
   const login = (email: string) => {
-    setUsuario({
+    // Mock data
+    const novoUsuario: Usuario = {
+      id: '1',
       nome: 'Psicólogo Silva',
       email,
       telefone: '(11) 99999-9999',
       iniciais: 'PS'
-    });
+    };
+    setUsuario(novoUsuario);
   };
 
   const logout = () => {
     setUsuario(null);
-    localStorage.removeItem('psicare_auth_v2');
     navigate('/login');
   };
 
@@ -59,22 +59,28 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       novasIniciais = dados.nome.substring(0, 2).toUpperCase();
     }
 
-    setUsuario({ ...usuario, ...dados, iniciais: novasIniciais });
+    setUsuario(prev => prev ? { ...prev, ...dados, iniciais: novasIniciais } : null);
   };
 
-  const atualizarFoto = (file: File) => {
+  // ATUALIZADO: Recebe a imagem já processada pelo cropper
+  const salvarFotoCortada = (base64Image: string) => {
     if (!usuario) return;
+    setUsuario(prev => prev ? { ...prev, foto: base64Image } : null);
+  };
 
-    const reader = new FileReader();
-    reader.onloadend = () => {
-      const base64String = reader.result as string;
-      setUsuario({ ...usuario, foto: base64String });
-    };
-    reader.readAsDataURL(file);
+  // NOVO: Remove a propriedade foto
+  const removerFoto = () => {
+    if (!usuario) return;
+    setUsuario(prev => {
+        if (!prev) return null;
+        // Cria uma cópia e remove a propriedade foto
+        const { foto, ...rest } = prev; 
+        return rest as Usuario;
+    });
   };
 
   return (
-    <AuthContext.Provider value={{ usuario, login, logout, atualizarPerfil, atualizarFoto }}>
+    <AuthContext.Provider value={{ usuario, login, logout, atualizarPerfil, salvarFotoCortada, removerFoto }}>
       {children}
     </AuthContext.Provider>
   );
