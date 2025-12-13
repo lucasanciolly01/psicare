@@ -1,3 +1,4 @@
+// src/pages/Dashboard.tsx
 import { Users, CalendarCheck, Clock, Plus, ArrowRight } from 'lucide-react';
 import { StatCard } from '../components/ui/StatCard';
 import { usePacientes } from '../context/PacientesContext';
@@ -11,15 +12,15 @@ export function Dashboard() {
   const { usuario } = useAuth();
   const { pacientes } = usePacientes();
   
-  // Extraímos 'crescimentoSemanal' que calculamos no Contexto
+  // Extraímos dados do Contexto
   const { sessoesHoje, sessoesSemana, crescimentoSemanal, proximosAgendamentos } = useAgendamentos();
 
   const totalAtivos = pacientes.filter(p => p.status === 'ativo').length;
   const pacientesRecentes = pacientes.slice(0, 4);
 
   return (
-    <div className="space-y-8">
-      {/* Header */}
+    <div className="space-y-8 animate-fade-in">
+      {/* Header Principal */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-end gap-4">
         <div>
           <h1 className="text-3xl font-bold text-gray-800">
@@ -28,16 +29,15 @@ export function Dashboard() {
           <p className="text-gray-500 mt-2">Aqui está o resumo da sua prática hoje.</p>
         </div>
         <Link to="/agenda">
-           <button className="bg-primary hover:bg-green-700 text-white px-6 py-3 rounded-xl font-medium flex items-center gap-2 shadow-lg shadow-green-200 transition-all transform hover:-translate-y-1">
+           <button className="bg-primary hover:bg-green-700 text-white px-6 py-3 rounded-xl font-medium flex items-center gap-2 shadow-lg shadow-green-200 transition-all transform hover:-translate-y-1 active:scale-95">
             <Plus size={20} /> Novo Agendamento
           </button>
         </Link>
       </div>
 
-      {/* Grid de Cards - CORRIGIDO AQUI */}
+      {/* Grid de Cards (Estatísticas) */}
       <section className="grid grid-cols-1 md:grid-cols-3 gap-6">
         
-        {/* Card 1: Pacientes - Usa 'description' pois não temos dados históricos de cadastro */}
         <StatCard 
           title="Pacientes Ativos" 
           value={totalAtivos} 
@@ -46,7 +46,6 @@ export function Dashboard() {
           description={`De ${pacientes.length} totais`} 
         />
         
-        {/* Card 2: Hoje - Informativo simples */}
         <StatCard 
           title="Sessões Hoje" 
           value={sessoesHoje} 
@@ -55,7 +54,6 @@ export function Dashboard() {
           description={format(new Date(), "'Dia' dd 'de' MMMM", { locale: ptBR })}
         />
         
-        {/* Card 3: Semana - Usa 'trendValue' pois calculamos o crescimento real */}
         <StatCard 
           title="Sessões na Semana" 
           value={sessoesSemana} 
@@ -66,21 +64,33 @@ export function Dashboard() {
         />
       </section>
 
-      {/* Restante do layout (Listas) permanece igual */}
+      {/* Grid Inferior */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         
         {/* LISTA DE PRÓXIMOS ATENDIMENTOS */}
         <div className="lg:col-span-2 bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-          <div className="flex justify-between items-center mb-6">
+          
+          {/* --- ALTERAÇÃO AQUI: CABEÇALHO RESPONSIVO --- */}
+          {/* Mobile: Coluna (flex-col) | Tablet/PC: Linha (sm:flex-row) */}
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-6">
             <h3 className="text-lg font-bold text-gray-800">Próximos Atendimentos</h3>
-            <Link to="/agenda" className="text-primary text-sm font-medium hover:underline flex items-center gap-1">
-              Ver agenda completa <ArrowRight size={16} />
+            
+            <Link 
+              to="/agenda" 
+              className="inline-flex items-center text-sm font-medium text-primary hover:text-green-700 transition-colors group"
+            >
+              Ver agenda completa 
+              {/* Seta animada ao passar o mouse */}
+              <ArrowRight size={16} className="ml-1 transition-transform group-hover:translate-x-1" />
             </Link>
           </div>
+          {/* ------------------------------------------- */}
 
           <div className="space-y-4">
             {proximosAgendamentos.length === 0 ? (
-               <p className="text-gray-400 text-center py-8">Nenhum atendimento próximo.</p>
+               <p className="text-gray-400 text-center py-8 bg-gray-50 rounded-lg border border-dashed border-gray-200">
+                 Nenhum atendimento próximo.
+               </p>
             ) : (
               proximosAgendamentos.map((sessao) => {
                 const isSessaoHoje = isToday(parseISO(sessao.data));
@@ -88,6 +98,7 @@ export function Dashboard() {
                 return (
                   <div key={sessao.id} className="flex items-center justify-between p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors cursor-pointer border border-transparent hover:border-gray-200">
                     <div className="flex items-center gap-4">
+                      {/* Hora e Data */}
                       <div className="text-center min-w-[60px]">
                         <span className="block text-lg font-bold text-gray-800">{sessao.hora}</span>
                         {!isSessaoHoje && (
@@ -97,16 +108,20 @@ export function Dashboard() {
                         )}
                       </div>
                       
+                      {/* Indicador Visual de Status */}
                       <div className={`w-1 h-10 rounded-full ${
                         sessao.status === 'concluido' ? 'bg-green-500' : 
                         sessao.status === 'cancelado' ? 'bg-red-500' : 'bg-blue-500'
                       }`}></div>
                       
+                      {/* Dados do Paciente */}
                       <div>
                         <h4 className="font-semibold text-gray-800">{sessao.pacienteNome}</h4>
                         <p className="text-sm text-gray-500">{sessao.tipo}</p>
                       </div>
                     </div>
+
+                    {/* Badge de Status (Visível apenas em telas maiores que mobile pequeno) */}
                     <div className={`px-3 py-1 rounded-full text-xs font-medium hidden sm:block ${
                       sessao.status === 'concluido' ? 'bg-green-100 text-green-700' : 
                       sessao.status === 'cancelado' ? 'bg-red-100 text-red-700' :
@@ -122,8 +137,9 @@ export function Dashboard() {
         </div>
 
         {/* Coluna Direita: Pacientes Recentes */}
-        <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6 flex flex-col">
+        <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6 flex flex-col h-full">
           <h3 className="text-lg font-bold text-gray-800 mb-6">Pacientes Recentes</h3>
+          
           <ul className="space-y-4 flex-1">
             {pacientesRecentes.length === 0 ? (
                <p className="text-gray-400 text-sm text-center py-4">Nenhum paciente cadastrado.</p>
@@ -131,7 +147,7 @@ export function Dashboard() {
               pacientesRecentes.map((paciente) => (
                 <li key={paciente.id} className="flex items-center gap-3 pb-3 border-b border-gray-50 last:border-0 last:pb-0">
                   <div className="w-10 h-10 rounded-full bg-green-100 text-primary flex items-center justify-center font-bold text-sm">
-                      {paciente.nome.substring(0, 2).toUpperCase()}
+                    {paciente.nome.substring(0, 2).toUpperCase()}
                   </div>
                   <div>
                     <span className="block text-sm font-medium text-gray-700">{paciente.nome}</span>
@@ -145,6 +161,7 @@ export function Dashboard() {
               ))
             )}
           </ul>
+          
           <Link to="/pacientes" className="w-full mt-6 py-2.5 text-sm text-center text-gray-600 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors font-medium">
             Ver todos os pacientes
           </Link>
