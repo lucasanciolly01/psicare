@@ -5,6 +5,26 @@ import { useToast } from "../context/ToastContext";
 import { User, Phone, Mail, Save, Camera, Trash2, AlertTriangle } from "lucide-react";
 import { ImageCropperModal } from "../components/ImageCropperModal"; 
 
+// Função auxiliar para formatar telefone (definida fora para performance)
+const formatPhoneNumber = (value: string) => {
+  if (!value) return "";
+  
+  // 1. Remove tudo que não é número
+  const numbers = value.replace(/\D/g, "");
+
+  // 2. Limita a 11 dígitos (DDD + 9 dígitos)
+  const truncated = numbers.slice(0, 11);
+
+  // 3. Aplica a máscara progressivamente
+  if (truncated.length <= 2) {
+    return truncated.replace(/(\d{0,2})/, "($1");
+  } else if (truncated.length <= 7) {
+    return truncated.replace(/(\d{2})(\d{0,5})/, "($1) $2");
+  } else {
+    return truncated.replace(/(\d{2})(\d{5})(\d{0,4})/, "($1) $2-$3");
+  }
+};
+
 export function Perfil() {
   const { usuario, atualizarPerfil, salvarFotoCortada, removerFoto } = useAuth();
   const { addToast } = useToast();
@@ -18,20 +38,23 @@ export function Perfil() {
   const [tempImageSrc, setTempImageSrc] = useState<string | null>(null);
   const [showCropper, setShowCropper] = useState(false);
 
-  // NOVO: Estado para o Modal de Confirmação de Exclusão
+  // Estado para o Modal de Confirmação de Exclusão
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
   useEffect(() => {
     if (usuario) {
       setNome(usuario.nome);
       setEmail(usuario.email);
-      setTelefone(usuario.telefone);
+      // Formata o telefone ao carregar os dados do usuário
+      setTelefone(formatPhoneNumber(usuario.telefone));
     }
   }, [usuario]);
 
   const handleSubmit = (e: FormEvent) => {
     e.preventDefault();
     try {
+      // Salva os dados (removemos a formatação antes de enviar se o backend preferir apenas números, 
+      // mas aqui mantivemos conforme o estado para consistência visual)
       atualizarPerfil({ nome, email, telefone });
       addToast({
         type: 'success',
@@ -45,6 +68,12 @@ export function Perfil() {
         description: 'Não foi possível salvar as alterações.'
       });
     }
+  };
+
+  // Handler específico para formatar enquanto digita
+  const handlePhoneChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const formatted = formatPhoneNumber(e.target.value);
+    setTelefone(formatted);
   };
 
   const onFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -75,10 +104,9 @@ export function Perfil() {
     }
   };
 
-  // Função chamada ao confirmar a exclusão no Modal
   const confirmDeletePhoto = () => {
     removerFoto();
-    setShowDeleteConfirm(false); // Fecha o modal
+    setShowDeleteConfirm(false);
     addToast({
       type: 'info',
       title: 'Foto removida',
@@ -91,7 +119,7 @@ export function Perfil() {
   return (
     <div className="p-4 md:p-6 animate-fade-in relative">
       
-      {/* 1. Modal do Cropper (Ajuste de Imagem) */}
+      {/* 1. Modal do Cropper */}
       {showCropper && tempImageSrc && (
         <ImageCropperModal
           imageSrc={tempImageSrc}
@@ -103,7 +131,7 @@ export function Perfil() {
         />
       )}
 
-      {/* 2. NOVO: Modal de Confirmação de Exclusão */}
+      {/* 2. Modal de Confirmação de Exclusão */}
       {showDeleteConfirm && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 animate-fade-in backdrop-blur-sm">
           <div className="bg-white rounded-xl shadow-2xl w-full max-w-sm overflow-hidden scale-100 transition-transform">
@@ -171,7 +199,6 @@ export function Perfil() {
 
                 {usuario.foto && (
                    <button 
-                   // AQUI: Apenas abre o modal, não deleta direto
                    onClick={() => setShowDeleteConfirm(true)}
                    className="bg-white text-red-500 border border-red-100 p-2.5 rounded-full cursor-pointer hover:bg-red-50 shadow-lg transition-all hover:scale-105 active:scale-95 flex items-center justify-center" 
                    title="Remover foto"
@@ -203,9 +230,11 @@ export function Perfil() {
                 <div className="relative">
                   <Phone size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
                   <input
-                    type="text"
+                    type="tel" // Alterado para 'tel' para abrir teclado numérico no mobile
                     value={telefone}
-                    onChange={(e) => setTelefone(e.target.value)}
+                    onChange={handlePhoneChange} // Usando o novo handler com máscara
+                    maxLength={15} // Limite (11 dígitos + formatação)
+                    placeholder="(00) 00000-0000"
                     className="w-full pl-10 pr-3 py-2.5 border border-gray-200 rounded-lg focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all"
                   />
                 </div>
