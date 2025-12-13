@@ -108,6 +108,7 @@ export default function Cadastro() {
               <div className="w-1.5 h-1.5 rounded-full bg-green-300"></div>
               Agenda
             </span>
+            
           </div>
         </div>
       </div>
