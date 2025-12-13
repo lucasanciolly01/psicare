@@ -56,6 +56,7 @@ export function Pacientes() {
     setNovoPaciente({ ...novoPaciente, telefone: valorMascarado });
   };
 
+  // ... (Mantenha os useEffects e handlers originais aqui sem alteração) ...
   useEffect(() => {
     if (pacienteEmEdicao) {
       const paciente = pacientes.find((p) => p.id === pacienteEmEdicao);
@@ -114,6 +115,7 @@ export function Pacientes() {
       setPacienteParaDeletar(null);
     }
   };
+  // ... (Fim dos handlers) ...
 
   const pacientesFiltrados = pacientes.filter((paciente) => {
     const matchNome = paciente.nome
@@ -126,13 +128,13 @@ export function Pacientes() {
 
   const StatusBadge = ({ status }: { status: string }) => (
     <span
-      className={`px-3 py-1 rounded-full text-xs font-medium inline-flex items-center gap-1.5
+      className={`px-2.5 py-0.5 rounded-full text-[10px] md:text-xs font-bold uppercase tracking-wide inline-flex items-center gap-1.5 border
       ${
         status === "ativo"
-          ? "bg-green-100 text-green-700"
+          ? "bg-green-50 text-green-700 border-green-100"
           : status === "pausa"
-          ? "bg-yellow-100 text-yellow-700"
-          : "bg-gray-100 text-gray-700"
+          ? "bg-yellow-50 text-yellow-700 border-yellow-100"
+          : "bg-gray-50 text-gray-600 border-gray-100"
       }`}
     >
       <span
@@ -141,7 +143,7 @@ export function Pacientes() {
             ? "bg-green-500"
             : status === "pausa"
             ? "bg-yellow-500"
-            : "bg-gray-500"
+            : "bg-gray-400"
         }`}
       ></span>
       {status === "ativo"
@@ -161,7 +163,7 @@ export function Pacientes() {
             Gerencie seus pacientes e prontuários
           </p>
         </div>
-        
+
         <button
           onClick={() => setIsCadastroOpen(true)}
           className="w-full md:w-auto bg-primary hover:bg-green-700 text-white px-5 py-3 rounded-xl font-medium flex items-center justify-center gap-2 shadow-lg shadow-green-200 transition-all active:scale-95"
@@ -198,67 +200,85 @@ export function Pacientes() {
 
       <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
         
-        {/* === VISÃO MOBILE (Cards) === */}
+        {/* === VISÃO MOBILE (Cards) - OTIMIZADA E ROBUSTA === */}
         <div className="block md:hidden divide-y divide-gray-100">
           {pacientesFiltrados.map((paciente) => (
-            <div key={paciente.id} className="p-4 flex flex-col gap-3">
-              <div className="flex justify-between items-start">
-                <div className="flex items-center gap-3">
-                  <div className="w-12 h-12 rounded-full bg-green-100 text-primary flex items-center justify-center font-bold text-lg">
+            <div key={paciente.id} className="p-4 flex flex-col gap-4">
+              
+              {/* LINHA SUPERIOR: Identidade e Ações */}
+              <div className="flex items-start justify-between gap-3">
+                {/* Esquerda: Avatar e Textos */}
+                <div className="flex items-center gap-3 flex-1 min-w-0">
+                  <div className="w-12 h-12 rounded-full bg-green-100 text-primary flex-shrink-0 flex items-center justify-center font-bold text-lg border border-green-200">
                     {paciente.nome.substring(0, 2).toUpperCase()}
                   </div>
-                  <div>
-                    <h3 className="font-bold text-gray-900">{paciente.nome}</h3>
+                  <div className="flex flex-col min-w-0">
+                    <h3 className="font-bold text-gray-900 text-base truncate leading-tight">
+                      {paciente.nome}
+                    </h3>
                     <div className="mt-1">
                         <StatusBadge status={paciente.status} />
                     </div>
                   </div>
                 </div>
-                <div className="flex gap-1">
+
+                {/* Direita: Ações (shrink-0 impede que botões sejam esmagados) */}
+                <div className="flex gap-1 shrink-0 ml-1">
                   <button
                     onClick={() => setPacienteVisualizar(paciente)}
-                    className="p-2 text-gray-400 hover:text-primary bg-gray-50 rounded-lg border border-gray-100"
+                    className="w-9 h-9 flex items-center justify-center text-gray-400 hover:text-primary bg-white hover:bg-green-50 rounded-lg border border-gray-200 transition-colors"
                   >
                     <Eye size={18} />
                   </button>
                   <button
                     onClick={() => setPacienteEmEdicao(paciente.id)}
-                    className="p-2 text-gray-400 hover:text-blue-500 bg-gray-50 rounded-lg border border-gray-100"
+                    className="w-9 h-9 flex items-center justify-center text-gray-400 hover:text-blue-500 bg-white hover:bg-blue-50 rounded-lg border border-gray-200 transition-colors"
                   >
                     <Edit size={18} />
                   </button>
                   <button
                     onClick={() => setPacienteParaDeletar(paciente.id)}
-                    className="p-2 text-gray-400 hover:text-red-500 bg-gray-50 rounded-lg border border-gray-100"
+                    className="w-9 h-9 flex items-center justify-center text-gray-400 hover:text-red-500 bg-white hover:bg-red-50 rounded-lg border border-gray-200 transition-colors"
                   >
                     <Trash2 size={18} />
                   </button>
                 </div>
               </div>
 
-              <div className="bg-gray-50 p-3 rounded-lg text-sm space-y-2 text-gray-600 border border-gray-100">
-                <div className="flex items-center gap-2">
-                  <Phone size={14} className="text-gray-400" />
-                  {paciente.telefone}
+              {/* LINHA INFERIOR: Informações de Contato (Grid) */}
+              <div className="bg-gray-50/50 p-3.5 rounded-xl border border-gray-100 space-y-2.5">
+                <div className="flex items-center gap-3 text-sm text-gray-700">
+                  <div className="w-6 h-6 rounded-full bg-white flex items-center justify-center border border-gray-200 shrink-0 text-gray-400">
+                    <Phone size={13} />
+                  </div>
+                  <span className="font-medium">{paciente.telefone}</span>
                 </div>
+
                 {paciente.email && (
-                  <div className="flex items-center gap-2">
-                    <Mail size={14} className="text-gray-400" />
-                    {paciente.email}
+                  <div className="flex items-center gap-3 text-sm text-gray-700">
+                    <div className="w-6 h-6 rounded-full bg-white flex items-center justify-center border border-gray-200 shrink-0 text-gray-400">
+                      <Mail size={13} />
+                    </div>
+                    <span className="truncate max-w-[220px]">{paciente.email}</span>
                   </div>
                 )}
-                <div className="flex items-center gap-2 border-t border-gray-200 pt-2 mt-1">
-                  <FileText size={14} className="text-gray-400" />
-                  {paciente.queixaPrincipal
-                    ? "Prontuário Iniciado"
-                    : "Sem Prontuário"}
+
+                <div className="flex items-center gap-3 text-sm text-gray-700 border-t border-gray-100 pt-2.5 mt-1">
+                  <div className="w-6 h-6 rounded-full bg-white flex items-center justify-center border border-gray-200 shrink-0 text-gray-400">
+                    <FileText size={13} />
+                  </div>
+                  <span className={`${paciente.queixaPrincipal ? "text-green-600 font-medium" : "text-gray-500"}`}>
+                    {paciente.queixaPrincipal
+                      ? "Prontuário Iniciado"
+                      : "Aguardando Prontuário"}
+                  </span>
                 </div>
               </div>
             </div>
           ))}
         </div>
 
-        {/* === VISÃO DESKTOP (Tabela Original - MANTIDA INTACTA) === */}
+        {/* === VISÃO DESKTOP (Tabela Original - MANTIDA) === */}
         <div className="hidden md:block overflow-x-auto">
           <table className="w-full text-left border-collapse">
             <thead>
@@ -350,8 +370,7 @@ export function Pacientes() {
         )}
       </div>
 
-      {/* --- MODAL DE CADASTRO CORRIGIDO --- */}
-{/* --- MODAL DE CADASTRO OTIMIZADO PARA TODOS OS SMARTPHONES --- */}
+      {/* --- MODAL DE CADASTRO (MANTIDO O MESMO) --- */}
       <Modal
         isOpen={isCadastroOpen}
         onClose={fecharModalCadastro}
@@ -359,12 +378,12 @@ export function Pacientes() {
         size="lg"
       >
         <form onSubmit={handleCadastro} className="space-y-6">
-          <div>
+           {/* ... (Conteúdo do formulário mantido igual ao anterior) ... */}
+           {/* Para brevidade, replique o conteúdo do form fornecido no código anterior aqui */}
+           <div>
             <h4 className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-4 flex items-center gap-2">
               <User size={14} /> Dados Pessoais
             </h4>
-            
-            {/* GRID RESPONSIVO: Coluna única no mobile, duas colunas no desktop */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
               <div className="md:col-span-2">
                 <label className="block text-sm font-medium text-gray-700 mb-1.5">
@@ -373,7 +392,6 @@ export function Pacientes() {
                 <input
                   required
                   type="text"
-                  // Altura de 48px (h-12) para toque fácil
                   className="w-full px-4 h-12 border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all text-base"
                   placeholder="Ex: João da Silva"
                   value={novoPaciente.nome}
@@ -409,11 +427,9 @@ export function Pacientes() {
                   Data de Nascimento
                 </label>
                 <div className="relative">
-                  {/* ÍCONE NA ESQUERDA para evitar colisão com o texto da data no iOS */}
                   <CalendarIcon size={18} className="absolute left-3 top-3.5 text-gray-400 pointer-events-none" />
                   <input
                     type="date"
-                    // Padding left ajustado para o ícone
                     className="w-full pl-10 pr-4 h-12 border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all text-gray-600 bg-white text-base appearance-none"
                     value={novoPaciente.dataNascimento}
                     max={new Date().toISOString().split("T")[0]}
