@@ -10,10 +10,14 @@ import {
   Edit,
   FileText,
   Eye,
-  Calendar as CalendarIcon,
+  // ADICIONE ESTA LINHA:
+  Calendar as CalendarIcon, 
 } from "lucide-react";
 import { Modal } from "../components/ui/Modal";
-import { usePacientes, type Paciente } from "../context/PacientesContext";
+// CORREÇÃO 1: Removido 'type Paciente' do import do contexto
+import { usePacientes } from "../context/PacientesContext";
+// CORREÇÃO 1: Adicionado import correto do tipo Paciente global
+import type { Paciente } from "../types";
 import { PatientDetailsModal } from "../components/pacientes/PatientDetailsModal";
 
 export function Pacientes() {
@@ -32,12 +36,13 @@ export function Pacientes() {
     null
   );
 
+  // CORREÇÃO 2: Status inicial em Maiúsculo para bater com os types
   const [novoPaciente, setNovoPaciente] = useState({
     nome: "",
     email: "",
     telefone: "",
     dataNascimento: "",
-    status: "ativo" as Paciente["status"],
+    status: "ATIVO" as Paciente["status"],
     queixaPrincipal: "",
     historicoFamiliar: "",
     observacoesIniciais: "",
@@ -56,7 +61,6 @@ export function Pacientes() {
     setNovoPaciente({ ...novoPaciente, telefone: valorMascarado });
   };
 
-  // ... (Mantenha os useEffects e handlers originais aqui sem alteração) ...
   useEffect(() => {
     if (pacienteEmEdicao) {
       const paciente = pacientes.find((p) => p.id === pacienteEmEdicao);
@@ -83,7 +87,7 @@ export function Pacientes() {
           email: "",
           telefone: "",
           dataNascimento: "",
-          status: "ativo",
+          status: "ATIVO", // Default em Maiúsculo
           queixaPrincipal: "",
           historicoFamiliar: "",
           observacoesIniciais: "",
@@ -115,44 +119,53 @@ export function Pacientes() {
       setPacienteParaDeletar(null);
     }
   };
-  // ... (Fim dos handlers) ...
 
   const pacientesFiltrados = pacientes.filter((paciente) => {
     const matchNome = paciente.nome
       .toLowerCase()
       .includes(termoBusca.toLowerCase());
+    
+    // CORREÇÃO 3: Filtro de status agora compara com Maiúsculo (ou converte se necessário)
+    // Se o filtroStatus for 'todos', passa. Se não, compara exato (o select value abaixo foi ajustado)
     const matchStatus =
       filtroStatus === "todos" || paciente.status === filtroStatus;
+    
     return matchNome && matchStatus;
   });
 
-  const StatusBadge = ({ status }: { status: string }) => (
-    <span
-      className={`px-2.5 py-0.5 rounded-full text-[10px] md:text-xs font-bold uppercase tracking-wide inline-flex items-center gap-1.5 border
-      ${
-        status === "ativo"
-          ? "bg-green-50 text-green-700 border-green-100"
-          : status === "pausa"
-          ? "bg-yellow-50 text-yellow-700 border-yellow-100"
-          : "bg-gray-50 text-gray-600 border-gray-100"
-      }`}
-    >
+  // CORREÇÃO 4: Componente Badge agora lida com os status em MAIÚSCULO do Java
+  const StatusBadge = ({ status }: { status: string }) => {
+    // Normaliza para garantir comparação segura
+    const s = status ? status.toUpperCase() : "ATIVO";
+    
+    return (
       <span
-        className={`w-1.5 h-1.5 rounded-full ${
-          status === "ativo"
-            ? "bg-green-500"
-            : status === "pausa"
-            ? "bg-yellow-500"
-            : "bg-gray-400"
+        className={`px-2.5 py-0.5 rounded-full text-[10px] md:text-xs font-bold uppercase tracking-wide inline-flex items-center gap-1.5 border
+        ${
+          s === "ATIVO"
+            ? "bg-green-50 text-green-700 border-green-100"
+            : s === "PAUSA"
+            ? "bg-yellow-50 text-yellow-700 border-yellow-100"
+            : "bg-gray-50 text-gray-600 border-gray-100"
         }`}
-      ></span>
-      {status === "ativo"
-        ? "Acompanhamento"
-        : status === "pausa"
-        ? "Pausado"
-        : "Inativo"}
-    </span>
-  );
+      >
+        <span
+          className={`w-1.5 h-1.5 rounded-full ${
+            s === "ATIVO"
+              ? "bg-green-500"
+              : s === "PAUSA"
+              ? "bg-yellow-500"
+              : "bg-gray-400"
+          }`}
+        ></span>
+        {s === "ATIVO"
+          ? "Acompanhamento"
+          : s === "PAUSA"
+          ? "Pausado"
+          : "Inativo"}
+      </span>
+    );
+  };
 
   return (
     <div className="space-y-6 pb-24 md:pb-0">
@@ -191,23 +204,21 @@ export function Pacientes() {
           value={filtroStatus}
           onChange={(e) => setFiltroStatus(e.target.value)}
         >
+          {/* CORREÇÃO 5: Values do Select atualizados para MAIÚSCULO para bater com o filtro */}
           <option value="todos">Todos os Status</option>
-          <option value="ativo">Ativos</option>
-          <option value="pausa">Em Pausa</option>
-          <option value="inativo">Inativos</option>
+          <option value="ATIVO">Ativos</option>
+          <option value="PAUSA">Em Pausa</option>
+          <option value="INATIVO">Inativos</option>
         </select>
       </div>
 
       <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
         
-        {/* === VISÃO MOBILE (Cards) - OTIMIZADA E ROBUSTA === */}
+        {/* === VISÃO MOBILE (Cards) === */}
         <div className="block md:hidden divide-y divide-gray-100">
           {pacientesFiltrados.map((paciente) => (
             <div key={paciente.id} className="p-4 flex flex-col gap-4">
-              
-              {/* LINHA SUPERIOR: Identidade e Ações */}
               <div className="flex items-start justify-between gap-3">
-                {/* Esquerda: Avatar e Textos */}
                 <div className="flex items-center gap-3 flex-1 min-w-0">
                   <div className="w-12 h-12 rounded-full bg-green-100 text-primary flex-shrink-0 flex items-center justify-center font-bold text-lg border border-green-200">
                     {paciente.nome.substring(0, 2).toUpperCase()}
@@ -222,7 +233,6 @@ export function Pacientes() {
                   </div>
                 </div>
 
-                {/* Direita: Ações (shrink-0 impede que botões sejam esmagados) */}
                 <div className="flex gap-1 shrink-0 ml-1">
                   <button
                     onClick={() => setPacienteVisualizar(paciente)}
@@ -245,7 +255,6 @@ export function Pacientes() {
                 </div>
               </div>
 
-              {/* LINHA INFERIOR: Informações de Contato (Grid) */}
               <div className="bg-gray-50/50 p-3.5 rounded-xl border border-gray-100 space-y-2.5">
                 <div className="flex items-center gap-3 text-sm text-gray-700">
                   <div className="w-6 h-6 rounded-full bg-white flex items-center justify-center border border-gray-200 shrink-0 text-gray-400">
@@ -278,7 +287,7 @@ export function Pacientes() {
           ))}
         </div>
 
-        {/* === VISÃO DESKTOP (Tabela Original - MANTIDA) === */}
+        {/* === VISÃO DESKTOP (Tabela) === */}
         <div className="hidden md:block overflow-x-auto">
           <table className="w-full text-left border-collapse">
             <thead>
@@ -370,7 +379,6 @@ export function Pacientes() {
         )}
       </div>
 
-      {/* --- MODAL DE CADASTRO (MANTIDO O MESMO) --- */}
       <Modal
         isOpen={isCadastroOpen}
         onClose={fecharModalCadastro}
@@ -378,8 +386,6 @@ export function Pacientes() {
         size="lg"
       >
         <form onSubmit={handleCadastro} className="space-y-6">
-           {/* ... (Conteúdo do formulário mantido igual ao anterior) ... */}
-           {/* Para brevidade, replique o conteúdo do form fornecido no código anterior aqui */}
            <div>
             <h4 className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-4 flex items-center gap-2">
               <User size={14} /> Dados Pessoais
@@ -475,9 +481,10 @@ export function Pacientes() {
                     })
                   }
                 >
-                  <option value="ativo">Ativo</option>
-                  <option value="pausa">Pausado</option>
-                  <option value="inativo">Inativos</option>
+                  {/* CORREÇÃO 6: Values do Select do Modal em MAIÚSCULO */}
+                  <option value="ATIVO">Ativo</option>
+                  <option value="PAUSA">Pausado</option>
+                  <option value="INATIVO">Inativos</option>
                 </select>
               </div>
             </div>

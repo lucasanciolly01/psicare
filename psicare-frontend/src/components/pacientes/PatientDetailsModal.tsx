@@ -1,9 +1,7 @@
 import { Modal } from "../ui/Modal";
-import {
-  usePacientes,
-  type Paciente,
-  type Sessao,
-} from "../../context/PacientesContext";
+import { type Paciente, type Sessao, type StatusSessao } from "../../types";
+import { sessaoService } from "../../services/sessaoService";
+import { useToast } from "../../context/ToastContext";
 import {
   Phone,
   Mail,
@@ -15,10 +13,9 @@ import {
   Calendar as CalendarIcon,
   CheckCircle,
   XCircle,
-  HeartPulse,
   ArrowRight,
 } from "lucide-react";
-import { useState, type ElementType } from "react";
+import { useState, useEffect, useCallback, type ElementType } from "react";
 import { format, parseISO } from "date-fns";
 import { ptBR } from "date-fns/locale";
 
@@ -28,7 +25,7 @@ interface PatientDetailsProps {
   paciente: Paciente | null;
 }
 
-// --- HELPER 1: Componente Visual de Informação (MOVIDO PARA FORA) ---
+// --- HELPER: Componente Visual de Informação ---
 const InfoSection = ({
   icon: Icon,
   title,
@@ -82,15 +79,38 @@ export function PatientDetailsModal({
   onClose,
   paciente,
 }: PatientDetailsProps) {
-  const { adicionarSessao } = usePacientes();
+  const { addToast } = useToast();
+  const [sessoes, setSessoes] = useState<Sessao[]>([]);
+  const [loadingHistory, setLoadingHistory] = useState(false);
+  
   const [isNewSessaoModalOpen, setIsNewSessaoModalOpen] = useState(false);
 
-  const [novaSessao, setNovaSessao] = useState<Omit<Sessao, "id">>({
+  // Estado inicial
+  const [novaSessao, setNovaSessao] = useState({
     data: new Date().toISOString().split("T")[0],
     tipo: "Sessão de Acompanhamento",
-    statusSessao: "compareceu",
+    status: "REALIZADO" as StatusSessao,
     evolucao: "",
   });
+
+  const carregarHistorico = useCallback(async (pacienteId: string) => {
+    try {
+      setLoadingHistory(true);
+      const dados = await sessaoService.listarPorPaciente(pacienteId);
+      setSessoes(dados);
+    } catch (error) {
+      console.error(error);
+      if (addToast) addToast({ type: 'error', title: 'Erro', description: 'Falha ao carregar histórico.' });
+    } finally {
+      setLoadingHistory(false);
+    }
+  }, [addToast]);
+
+  useEffect(() => {
+    if (isOpen && paciente) {
+      carregarHistorico(paciente.id);
+    }
+  }, [isOpen, paciente, carregarHistorico]);
 
   if (!paciente) return null;
 
@@ -98,51 +118,85 @@ export function PatientDetailsModal({
     ? format(parseISO(paciente.dataNascimento), "dd/MM/yyyy", { locale: ptBR })
     : "N/A";
 
-  // --- HELPER 2: Estilos de Status ---
+  // --- CORES DOS BADGES ---
   const getStatusClasses = (
-    status: Sessao["statusSessao"],
+    status: string,
     isSelected: boolean = false
   ) => {
+    const s = status ? status.toUpperCase() : "";
+
     if (isSelected) {
-      switch (status) {
-        case "compareceu":
+      switch (s) {
+        case "REALIZADO":
           return "bg-green-600 border-green-700 text-white shadow-md ring-2 ring-green-200";
-        case "faltou":
+        case "FALTOU":
           return "bg-red-600 border-red-700 text-white shadow-md ring-2 ring-red-200";
-        case "remarcada":
+        case "AGENDADO": // Mapeia para Remarcada/Agendada
           return "bg-blue-600 border-blue-700 text-white shadow-md ring-2 ring-blue-200";
-        case "cancelada":
+        case "CANCELADO_PACIENTE": // Mapeia para Cancelada
+        case "CANCELADO_TERAPEUTA":
           return "bg-gray-600 border-gray-700 text-white shadow-md ring-2 ring-gray-200";
+        default: return "bg-gray-600 text-white";
       }
     }
-    switch (status) {
-      case "compareceu":
+    // Cores para a lista (timeline)
+    switch (s) {
+      case "REALIZADO":
         return "bg-green-100 text-green-700 border-green-200";
-      case "faltou":
+      case "FALTOU":
         return "bg-red-100 text-red-700 border-red-200";
-      case "remarcada":
+      case "AGENDADO":
+      case "CONFIRMADO":
         return "bg-blue-100 text-blue-700 border-blue-200";
-      case "cancelada":
-        return "bg-gray-100 text-gray-700 border-gray-200";
       default:
         return "bg-gray-100 text-gray-700 border-gray-200";
     }
   };
 
-  const handleAdicionarSessao = (e: React.FormEvent) => {
+  const handleAdicionarSessao = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!paciente) return;
 
-    adicionarSessao(paciente.id, novaSessao);
+    try {
+      const dataIso = new Date(novaSessao.data).toISOString(); 
 
-    setNovaSessao({
-      data: new Date().toISOString().split("T")[0],
-      tipo: "Sessão de Acompanhamento",
-      statusSessao: "compareceu",
-      evolucao: "",
-    });
-    setIsNewSessaoModalOpen(false);
+      const sessaoCriada = await sessaoService.criar(paciente.id, {
+        dataInicio: dataIso,
+        // O status aqui JÁ ESTÁ correto pois vem do botão que define o ENUM exato
+        status: novaSessao.status, 
+        evolucao: novaSessao.evolucao,
+        anotacoes: novaSessao.tipo 
+      });
+
+      setSessoes([sessaoCriada, ...sessoes]);
+      
+      setNovaSessao({
+        data: new Date().toISOString().split("T")[0],
+        tipo: "Sessão de Acompanhamento",
+        status: "REALIZADO",
+        evolucao: "",
+      });
+      setIsNewSessaoModalOpen(false);
+      
+      if (addToast) addToast({ type: 'success', title: 'Sucesso', description: 'Evolução salva!' });
+
+    } catch (error) {
+      console.error(error);
+      if (addToast) addToast({ type: 'error', title: 'Erro', description: 'Erro ao salvar evolução.' });
+    }
   };
+
+  // Helper visual para traduzir o ENUM para Português na tela
+  const traduzirStatus = (status: string) => {
+      if (status === 'AGENDADO') return 'Remarcada';
+      if (status === 'CANCELADO_PACIENTE') return 'Cancelada';
+      if (status === 'REALIZADO') return 'Realizado';
+      if (status === 'FALTOU') return 'Faltou';
+      return status;
+  }
+
+  const statusPacienteDisplay = paciente.status === 'ATIVO' ? 'Acompanhamento' : 
+                                paciente.status === 'PAUSA' ? 'Pausado' : 'Inativo';
 
   return (
     <>
@@ -153,7 +207,7 @@ export function PatientDetailsModal({
         size="xl"
       >
         <div className="space-y-6">
-          {/* HEADER PREMIUM */}
+          {/* HEADER */}
           <div className="relative overflow-hidden bg-gradient-to-br from-green-50 to-white p-6 rounded-2xl border border-green-100">
             <div className="relative z-10 flex flex-col md:flex-row gap-6 items-center md:items-start">
               <div className="w-20 h-20 rounded-full bg-white text-primary flex items-center justify-center text-3xl font-bold border-4 border-white shadow-md">
@@ -167,12 +221,12 @@ export function PatientDetailsModal({
                   </h2>
                   <span
                     className={`px-3 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider border ${
-                      paciente.status === "ativo"
+                      paciente.status === "ATIVO"
                         ? "bg-green-100 text-green-700 border-green-200"
                         : "bg-gray-100 text-gray-600 border-gray-200"
                     }`}
                   >
-                    {paciente.status}
+                    {statusPacienteDisplay}
                   </span>
                 </div>
 
@@ -205,28 +259,10 @@ export function PatientDetailsModal({
                   Dados Clínicos
                 </h3>
               </div>
-
-              <InfoSection
-                icon={Activity}
-                title="Queixa Principal"
-                content={paciente.queixaPrincipal}
-              />
-              <InfoSection
-                icon={HeartPulse}
-                title="Histórico Familiar"
-                content={paciente.historicoFamiliar}
-              />
-              <InfoSection
-                icon={FileText}
-                title="Observações Iniciais"
-                content={paciente.observacoesIniciais}
-              />
-              <InfoSection
-                icon={Lock}
-                title="Anotações Privadas"
-                content={paciente.anotacoes}
-                isPrivate={true}
-              />
+              <InfoSection icon={Activity} title="Queixa Principal" content={paciente.queixaPrincipal} />
+              <InfoSection icon={Activity} title="Histórico Familiar" content={paciente.historicoFamiliar} />
+              <InfoSection icon={FileText} title="Observações Iniciais" content={paciente.observacoesIniciais} />
+              <InfoSection icon={Lock} title="Anotações Privadas" content={paciente.anotacoes} isPrivate={true} />
             </div>
 
             <div className="md:col-span-7 flex flex-col h-full">
@@ -234,7 +270,7 @@ export function PatientDetailsModal({
                 <div className="flex items-center gap-2">
                   <Clock size={16} className="text-gray-400" />
                   <h3 className="text-xs font-bold text-gray-400 uppercase tracking-wider">
-                    Histórico ({paciente.sessoes?.length || 0})
+                    Histórico ({sessoes.length || 0})
                   </h3>
                 </div>
                 <button
@@ -246,8 +282,10 @@ export function PatientDetailsModal({
               </div>
 
               <div className="flex-1 overflow-y-auto max-h-[500px] pr-2 space-y-3 custom-scrollbar">
-                {paciente.sessoes && paciente.sessoes.length > 0 ? (
-                  [...paciente.sessoes].reverse().map((sessao) => (
+                {loadingHistory ? (
+                  <div className="text-center py-10 text-gray-500">Carregando...</div>
+                ) : sessoes.length > 0 ? (
+                  sessoes.map((sessao) => (
                     <div
                       key={sessao.id}
                       className="group relative bg-white border border-gray-100 rounded-xl p-4 hover:shadow-md transition-all hover:border-primary/30"
@@ -255,39 +293,26 @@ export function PatientDetailsModal({
                       <div className="flex justify-between items-start mb-2">
                         <div>
                           <p className="text-sm font-bold text-gray-800">
-                            {sessao.tipo}
+                            {sessao.anotacoes || "Sessão de Acompanhamento"}
                           </p>
                           <p className="text-xs text-gray-400 flex items-center gap-1 mt-0.5">
                             <CalendarIcon size={10} />
-                            {format(
-                              parseISO(sessao.data),
-                              "dd 'de' MMM, yyyy",
-                              { locale: ptBR }
-                            )}
+                            {sessao.dataInicio ? format(parseISO(sessao.dataInicio), "dd 'de' MMM, yyyy", { locale: ptBR }) : "Data n/a"}
                           </p>
                         </div>
-                        <span
-                          className={`text-[10px] px-2 py-1 rounded-md font-bold uppercase border ${getStatusClasses(
-                            sessao.statusSessao
-                          )}`}
-                        >
-                          {sessao.statusSessao}
+                        <span className={`text-[10px] px-2 py-1 rounded-md font-bold uppercase border ${getStatusClasses(sessao.status)}`}>
+                          {traduzirStatus(sessao.status)}
                         </span>
                       </div>
                       <div className="bg-gray-50 rounded-lg p-3 text-sm text-gray-600 leading-relaxed border border-gray-50 group-hover:bg-white group-hover:border-gray-100 transition-colors">
-                        {sessao.evolucao}
+                        {sessao.evolucao || "Sem descrição."}
                       </div>
                     </div>
                   ))
                 ) : (
                   <div className="flex flex-col items-center justify-center py-12 text-center border-2 border-dashed border-gray-100 rounded-xl bg-gray-50/50">
                     <FileText size={32} className="text-gray-300 mb-2" />
-                    <p className="text-sm text-gray-500 font-medium">
-                      Nenhuma evolução registrada.
-                    </p>
-                    <p className="text-xs text-gray-400 mt-1">
-                      Clique em "Nova Evolução" para começar.
-                    </p>
+                    <p className="text-sm text-gray-500 font-medium">Nenhuma evolução registrada.</p>
                   </div>
                 )}
               </div>
@@ -304,147 +329,86 @@ export function PatientDetailsModal({
       >
         <form onSubmit={handleAdicionarSessao} className="space-y-6">
           <div className="grid grid-cols-2 gap-5">
-            {/* TIPO DE SESSÃO */}
             <div className="col-span-2 md:col-span-1">
-              <label className="block text-sm font-bold text-gray-700 mb-1.5">
-                Tipo de Sessão
-              </label>
+              <label className="block text-sm font-bold text-gray-700 mb-1.5">Tipo de Sessão</label>
               <div className="relative">
                 <select
                   required
                   className="w-full pl-4 pr-10 h-12 border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none bg-white transition-all appearance-none text-base text-gray-700"
                   value={novaSessao.tipo}
-                  onChange={(e) =>
-                    setNovaSessao({ ...novaSessao, tipo: e.target.value })
-                  }
+                  onChange={(e) => setNovaSessao({ ...novaSessao, tipo: e.target.value })}
                 >
                   <option>Sessão de Acompanhamento</option>
                   <option>Anamnese Inicial</option>
                   <option>Retorno/Reavaliação</option>
                   <option>Entrevista Familiar</option>
                 </select>
-                <ArrowRight
-                  size={16}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 rotate-90 pointer-events-none"
-                />
+                <ArrowRight size={16} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 rotate-90 pointer-events-none" />
               </div>
             </div>
 
-            {/* DATA - COM AJUSTE RESPONSIVO DO ÍCONE */}
             <div className="col-span-2 md:col-span-1">
-              <label className="block text-sm font-bold text-gray-700 mb-1.5">
-                Data
-              </label>
+              <label className="block text-sm font-bold text-gray-700 mb-1.5">Data</label>
               <div className="relative">
-                {/* LÓGICA DO ÍCONE:
-            - Mobile (Padrão): left-3 (Esquerda)
-            - Desktop (md): right-3 (Direita) 
-          */}
-                <CalendarIcon
-                  size={18}
-                  className="absolute top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none left-3 md:left-auto md:right-3"
-                />
-
+                <CalendarIcon size={18} className="absolute top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none left-3 md:left-auto md:right-3" />
                 <input
                   required
                   type="date"
-                  /* LÓGICA DO PADDING:
-              - Mobile (pl-10): Espaço na esquerda para o ícone
-              - Desktop (md:pl-4): Espaço normal na esquerda
-              - Desktop (md:pr-10): Espaço na direita para o ícone
-            */
                   className="w-full h-12 pl-10 pr-4 md:pl-4 md:pr-10 border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all text-gray-700 bg-white text-base appearance-none"
                   value={novaSessao.data}
                   max={new Date().toISOString().split("T")[0]}
-                  onChange={(e) =>
-                    setNovaSessao({ ...novaSessao, data: e.target.value })
-                  }
+                  onChange={(e) => setNovaSessao({ ...novaSessao, data: e.target.value })}
                 />
               </div>
             </div>
 
-            {/* STATUS DA SESSÃO */}
             <div className="col-span-2">
-              <label className="block text-sm font-bold text-gray-700 mb-2">
-                Status da Sessão
-              </label>
-              {/* Grid: 2 colunas no mobile, 4 no desktop */}
+              <label className="block text-sm font-bold text-gray-700 mb-2">Status da Sessão</label>
+              
+              {/* --- AQUI ESTAVA O PROBLEMA: CORRIGIDO PARA ENVIAR ENUM DO JAVA --- */}
               <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
-                {["compareceu", "faltou", "remarcada", "cancelada"].map(
-                  (status) => {
-                    const isSelected = novaSessao.statusSessao === status;
+                {[
+                  { id: "REALIZADO", label: "Realizado", icon: CheckCircle },
+                  { id: "FALTOU", label: "Faltou", icon: XCircle },
+                  { id: "AGENDADO", label: "Remarcada", icon: Clock }, // Remarcada envia AGENDADO
+                  { id: "CANCELADO_PACIENTE", label: "Cancelada", icon: XCircle } // Cancelada envia CANCELADO_PACIENTE
+                ].map((item) => {
+                    const isSelected = novaSessao.status === item.id;
+                    const IconComp = item.icon;
+                    
                     return (
                       <button
                         type="button"
-                        key={status}
-                        onClick={() =>
-                          setNovaSessao({
-                            ...novaSessao,
-                            statusSessao: status as Sessao["statusSessao"],
-                          })
-                        }
-                        className={`
-                    flex flex-col items-center justify-center gap-1 py-3 px-2 rounded-xl transition-all duration-200 border min-h-[48px] active:scale-95
-                    ${
-                      isSelected
-                        ? getStatusClasses(
-                            status as Sessao["statusSessao"],
-                            true
-                          )
-                        : "bg-white border-gray-200 text-gray-500 hover:bg-gray-50 hover:border-gray-300"
-                    }
-                  `}
+                        key={item.id}
+                        onClick={() => setNovaSessao({ ...novaSessao, status: item.id as StatusSessao })}
+                        className={`flex flex-col items-center justify-center gap-1 py-3 px-2 rounded-xl transition-all duration-200 border min-h-[48px] active:scale-95
+                        ${isSelected ? getStatusClasses(item.id, true) : "bg-white border-gray-200 text-gray-500 hover:bg-gray-50 hover:border-gray-300"}`}
                       >
-                        {status === "compareceu" && <CheckCircle size={18} />}
-                        {(status === "faltou" || status === "cancelada") && (
-                          <XCircle size={18} />
-                        )}
-                        {status === "remarcada" && <Clock size={18} />}
-                        <span className="text-xs font-bold capitalize">
-                          {status}
-                        </span>
+                        <IconComp size={18} />
+                        <span className="text-xs font-bold capitalize">{item.label}</span>
                       </button>
                     );
                   }
                 )}
               </div>
+
             </div>
 
-            {/* EVOLUÇÃO / ANOTAÇÕES */}
             <div className="col-span-2">
-              <label className="text-sm font-bold text-gray-700 mb-1.5 flex flex-col md:flex-row md:items-center justify-between gap-1">
-                <span>Evolução / Anotações</span>
-                <span className="text-xs font-normal text-gray-400">
-                  Descreva os detalhes da sessão
-                </span>
-              </label>
+              <label className="text-sm font-bold text-gray-700 mb-1.5">Evolução / Anotações</label>
               <textarea
                 required
                 className="w-full p-4 border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none h-40 resize-none text-base leading-relaxed transition-all shadow-sm appearance-none"
-                placeholder="Registre aqui o que foi discutido, intervenções realizadas, humor do paciente e planejamento para a próxima sessão..."
+                placeholder="Detalhes da sessão..."
                 value={novaSessao.evolucao}
-                onChange={(e) =>
-                  setNovaSessao({ ...novaSessao, evolucao: e.target.value })
-                }
+                onChange={(e) => setNovaSessao({ ...novaSessao, evolucao: e.target.value })}
               ></textarea>
             </div>
           </div>
 
-          {/* BOTÕES DE AÇÃO */}
           <div className="pt-2 flex flex-col-reverse md:flex-row gap-3">
-            <button
-              type="button"
-              onClick={() => setIsNewSessaoModalOpen(false)}
-              className="flex-1 py-3.5 border border-gray-300 text-gray-700 rounded-xl font-bold hover:bg-gray-50 transition-colors active:bg-gray-100"
-            >
-              Cancelar
-            </button>
-            <button
-              type="submit"
-              className="flex-1 py-3.5 bg-primary text-white rounded-xl font-bold hover:bg-green-700 shadow-md transition-all active:scale-95 flex items-center justify-center gap-2 shadow-green-200"
-            >
-              <Plus size={20} /> Salvar Evolução
-            </button>
+            <button type="button" onClick={() => setIsNewSessaoModalOpen(false)} className="flex-1 py-3.5 border border-gray-300 text-gray-700 rounded-xl font-bold hover:bg-gray-50">Cancelar</button>
+            <button type="submit" className="flex-1 py-3.5 bg-primary text-white rounded-xl font-bold hover:bg-green-700 shadow-md">Salvar Evolução</button>
           </div>
         </form>
       </Modal>

@@ -15,7 +15,7 @@ export function Dashboard() {
   // Extraímos dados do Contexto
   const { sessoesHoje, sessoesSemana, crescimentoSemanal, proximosAgendamentos } = useAgendamentos();
 
-  const totalAtivos = pacientes.filter(p => p.status === 'ativo').length;
+  const totalAtivos = pacientes.filter(p => p.status === 'ATIVO').length;
   const pacientesRecentes = pacientes.slice(0, 4);
 
   return (
@@ -152,9 +152,9 @@ export function Dashboard() {
                   <div>
                     <span className="block text-sm font-medium text-gray-700">{paciente.nome}</span>
                     <span className={`text-xs px-2 py-0.5 rounded-full ${
-                      paciente.status === 'ativo' ? 'bg-green-50 text-green-700' : 'bg-gray-100 text-gray-500'
+                      paciente.status === 'ATIVO' ? 'bg-green-50 text-green-700' : 'bg-gray-100 text-gray-500'
                     }`}>
-                      {paciente.status === 'ativo' ? 'Ativo' : paciente.status}
+                      {paciente.status === 'ATIVO' ? 'Ativo' : paciente.status}
                     </span>
                   </div>
                 </li>

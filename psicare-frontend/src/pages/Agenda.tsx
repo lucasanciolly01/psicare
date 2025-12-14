@@ -57,7 +57,7 @@ export function Agenda() {
     tipo: "Terapia Individual",
   });
 
-  const pacientesAtivos = pacientes.filter((p) => p.status === "ativo");
+  const pacientesAtivos = pacientes.filter((p) => p.status === "ATIVO");
 
   // --- LÓGICA DE CRIAÇÃO ---
   const handleSaveAppointment = (e: React.FormEvent) => {

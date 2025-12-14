@@ -9,37 +9,12 @@ import {
 import { api } from "../services/api";
 import { useAuth } from "./AuthContext";
 import { useToast } from "./ToastContext";
-
-export interface Sessao {
-  id: string;
-  data: string;
-  tipo: string;
-  statusSessao: "compareceu" | "faltou" | "remarcada" | "cancelada";
-  evolucao: string;
-}
-
-export interface Paciente {
-  id: string;
-  nome: string;
-  email: string;
-  telefone: string;
-  dataNascimento: string;
-  status: "ativo" | "inativo" | "pausa";
-
-  queixaPrincipal?: string;
-  historicoFamiliar?: string;
-  observacoesIniciais?: string;
-  frequenciaSessao?: "SEMANAL" | "QUINZENAL" | "MENSAL" | "AVULSO";
-  avatarColor?: string;
-  anotacoes?: string;
-
-  sessoes: Sessao[];
-}
+import type { Paciente, Sessao } from "../types";
 
 interface PacientesContextData {
   pacientes: Paciente[];
   isLoading: boolean;
-  adicionarPaciente: (paciente: Partial<Paciente>) => Promise<void>;
+  adicionarPaciente: (dados: Partial<Paciente>) => Promise<void>;
   editarPaciente: (id: string, dados: Partial<Paciente>) => Promise<void>;
   removerPaciente: (id: string) => Promise<void>;
   atualizarPaciente: (id: string, dados: Partial<Paciente>) => Promise<void>;
@@ -61,17 +36,21 @@ export function PacientesProvider({ children }: { children: ReactNode }) {
       setIsLoading(true);
       const response = await api.get("/pacientes?size=100");
 
-      // CORREÇÃO AQUI: Trocamos 'any' por 'Partial<Paciente>' para satisfazer o lint
-      // O 'Partial' diz que o objeto pode ter as chaves de Paciente, mas não garante que todas existam, o que é seguro para dados de API.
-      const dadosFormatados: Paciente[] = response.data.content.map(
-        (p: Partial<Paciente>) => ({
+      // CORREÇÃO LINT 1: Tipamos a resposta explicitamente antes do map para evitar 'any'
+      const conteudoResponse = response.data.content as Partial<Paciente>[];
+
+      const dadosFormatados: Paciente[] = conteudoResponse.map(
+        (p) => ({
           ...p,
-          sessoes: [], // Garante array vazio se vier null
+          // Garante campos obrigatórios caso venham nulos do back
+          id: p.id || "",
+          nome: p.nome || "Sem Nome",
+          email: p.email || "",
+          telefone: p.telefone || "",
+          sessoes: [], 
           dataNascimento: p.dataNascimento || "",
-          // Adaptador de Status: Garante minúsculo para o front
-          status: p.status
-            ? (p.status.toLowerCase() as Paciente["status"])
-            : "ativo",
+          // Tipagem segura do status
+          status: p.status as Paciente['status'], 
           frequenciaSessao: p.frequenciaSessao,
         })
       );
@@ -100,21 +79,18 @@ export function PacientesProvider({ children }: { children: ReactNode }) {
 
   const adicionarPaciente = async (dados: Partial<Paciente>) => {
     try {
-      // Envia para o Java em Maiúsculo (se for enum)
       const payload = {
         ...dados,
-        frequenciaSessao: dados.frequenciaSessao?.toUpperCase() || "SEMANAL",
+        status: dados.status ? dados.status.toUpperCase() : "ATIVO",
+        frequenciaSessao:
+          dados.frequenciaSessao?.toUpperCase() || "SEMANAL",
       };
 
       const response = await api.post("/pacientes", payload);
 
-      // Ao receber de volta, aplica o mesmo adaptador localmente
       const novoPaciente: Paciente = {
         ...response.data,
         sessoes: [],
-        status: response.data.status
-          ? (response.data.status.toLowerCase() as Paciente["status"])
-          : "ativo",
       };
 
       setPacientes((prev) => [...prev, novoPaciente]);
@@ -138,12 +114,9 @@ export function PacientesProvider({ children }: { children: ReactNode }) {
 
   const editarPaciente = async (id: string, dados: Partial<Paciente>) => {
     try {
-      // ADAPTADOR DE ENVIO (Correção do Teste 3)
-      // Antes de mandar pro Java, transformamos os Enums em MAIÚSCULO
       const payload = {
         id,
         ...dados,
-        // Se o dado existir, converte. Se não, manda undefined para o Java ignorar.
         status: dados.status ? dados.status.toUpperCase() : undefined,
         frequenciaSessao: dados.frequenciaSessao
           ? dados.frequenciaSessao.toUpperCase()
@@ -158,11 +131,6 @@ export function PacientesProvider({ children }: { children: ReactNode }) {
             return {
               ...p,
               ...response.data,
-              // ADAPTADOR DE RECEBIMENTO
-              // O Java devolve MAIÚSCULO, nós convertemos para minúsculo para o React não quebrar
-              status: response.data.status
-                ? (response.data.status.toLowerCase() as Paciente["status"])
-                : p.status,
               sessoes: p.sessoes,
             };
           }
@@ -210,25 +178,11 @@ export function PacientesProvider({ children }: { children: ReactNode }) {
     }
   };
 
-  const adicionarSessao = (pacienteId: string, sessao: Omit<Sessao, "id">) => {
+  // CORREÇÃO LINT 2: Removemos os argumentos não utilizados para satisfazer o eslint
+  const adicionarSessao = () => {
     console.warn(
-      "Backend de Sessões ainda não implementado. Salvando apenas em memória."
+      "Atenção: Use o sessaoService no Modal. Esta função é apenas um fallback."
     );
-    setPacientes((state) =>
-      state.map((p) => {
-        if (p.id === pacienteId) {
-          const novaSessao: Sessao = { ...sessao, id: crypto.randomUUID() };
-          return { ...p, sessoes: [...p.sessoes, novaSessao] };
-        }
-        return p;
-      })
-    );
-    if (addToast)
-      addToast({
-        type: "info",
-        title: "Atenção",
-        description: "Sessão salva apenas localmente (Backend pendente).",
-      });
   };
 
   return (
