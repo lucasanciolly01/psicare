@@ -23,7 +23,6 @@ export interface Agendamento {
   observacoes?: string;
 }
 
-// ATUALIZAÇÃO: Adicionadas propriedades foto e telefone
 export interface Usuario {
   id: string;
   nome: string;
@@ -31,6 +30,7 @@ export interface Usuario {
   telefone: string;
   iniciais: string;
   foto?: string; // Base64 da imagem
+  token?: string; // <--- NOVO: Essencial para autenticação
 }
 
 export type TipoNotificacao = 'agendamento' | 'aniversario' | 'financeiro' | 'sistema';

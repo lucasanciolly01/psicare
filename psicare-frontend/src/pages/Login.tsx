@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import {
   Lock,
   Mail,
@@ -30,10 +30,9 @@ const loginSchema = z.object({
 
 type LoginFormData = z.infer<typeof loginSchema>;
 
-export function Login() {
+export default function Login() {
   const { login } = useAuth();
-  const navigate = useNavigate();
-
+  
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
 
@@ -49,11 +48,11 @@ export function Login() {
     setIsLoading(true);
 
     try {
-      await new Promise(resolve => setTimeout(resolve, 800));
+      // Alterado para enviar email E senha para o backend
       await login(data.email, data.password);
-      navigate('/');
     } catch (error) {
       console.error('Erro no login', error);
+      // O AuthContext já mostra o Toast de erro
     } finally {
       setIsLoading(false);
     }
@@ -163,7 +162,7 @@ export function Login() {
               <button
                 type="submit"
                 disabled={isLoading}
-                className="w-full bg-primary text-white py-4 rounded-xl font-bold flex items-center justify-center gap-2"
+                className="w-full bg-primary text-white py-4 rounded-xl font-bold flex items-center justify-center gap-2 hover:bg-green-700 transition-colors"
               >
                 {isLoading ? (
                   <>
@@ -181,7 +180,7 @@ export function Login() {
 
             <p className="text-center text-sm text-gray-600">
               Não tem conta?
-              <Link to="/cadastro" className="text-primary font-bold ml-2">
+              <Link to="/cadastro" className="text-primary font-bold ml-2 hover:underline">
                 Cadastre-se
               </Link>
             </p>

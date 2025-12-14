@@ -12,16 +12,16 @@ import { NotificacoesProvider } from './context/NotificacoesContext';
 // Precisam do adaptador: .then(module => ({ default: module.Nome }))
 const MainLayout = lazy(() => import('./components/layout/MainLayout').then(module => ({ default: module.MainLayout })));
 const Dashboard = lazy(() => import('./pages/Dashboard').then(module => ({ default: module.Dashboard })));
-const Login = lazy(() => import('./pages/Login').then(module => ({ default: module.Login })));
+
+// 2. Componentes com Exportação PADRÃO (export default function Nome)
+// Importação direta (Login foi movido para cá pois agora é export default)
+const Login = lazy(() => import('./pages/Login'));
+const Cadastro = lazy(() => import('./pages/Cadastro'));
 
 // Assumindo que as outras páginas internas seguem o padrão do Dashboard (Named Export):
 const Agenda = lazy(() => import('./pages/Agenda').then(module => ({ default: module.Agenda })));
 const Pacientes = lazy(() => import('./pages/Pacientes').then(module => ({ default: module.Pacientes })));
 const Perfil = lazy(() => import('./pages/Perfil').then(module => ({ default: module.Perfil })));
-
-// 2. Componentes com Exportação PADRÃO (export default function Nome)
-// Importação direta
-const Cadastro = lazy(() => import('./pages/Cadastro')); 
 
 function App() {
   return (

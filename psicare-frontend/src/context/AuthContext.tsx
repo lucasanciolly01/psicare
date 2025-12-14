@@ -1,6 +1,8 @@
 import { createContext, useContext, useState, useEffect, type ReactNode } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { type Usuario } from '../types';
+import { api } from '../services/api';
+import { useToast } from './ToastContext';
 
 interface AuthContextData {
   usuario: Usuario | null;
@@ -9,12 +11,17 @@ interface AuthContextData {
   atualizarPerfil: (dados: Partial<Usuario>) => void;
   salvarFotoCortada: (base64Image: string) => void;
   removerFoto: () => void;
+  loading: boolean;
 }
 
 const AuthContext = createContext<AuthContextData>({} as AuthContextData);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const navigate = useNavigate();
+  const { addToast } = useToast();
+  
+  // CORREÇÃO 1: Inicia como false, pois o localStorage é síncrono.
+  const [loading, setLoading] = useState(false);
 
   const [usuario, setUsuario] = useState<Usuario | null>(() => {
     const saved = localStorage.getItem('psicare_auth_v2');
@@ -24,45 +31,66 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     if (usuario) {
       localStorage.setItem('psicare_auth_v2', JSON.stringify(usuario));
+      
+      // CORREÇÃO 2: Tipagem segura (cast) para garantir que o token seja lido
+      const usuarioComToken = usuario as Usuario & { token?: string };
+      
+      if (usuarioComToken.token) {
+        api.defaults.headers.common['Authorization'] = `Bearer ${usuarioComToken.token}`;
+      }
     } else {
       localStorage.removeItem('psicare_auth_v2');
+      delete api.defaults.headers.common['Authorization'];
     }
+    // CORREÇÃO 3: Removido setLoading(false) daqui para evitar o erro 'set-state-in-effect'
   }, [usuario]);
 
-  const login = async (email: string) => {
+  const login = async (email: string, senha: string) => {
     try {
-      // UX: Simula um delay de rede para que o spinner de loading apareça na tela
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      setLoading(true);
+      // Chama o Backend Java
+      const response = await api.post('/login', { email, senha });
 
-      // SEGURANÇA: Log apenas informativo, NUNCA logar a senha (senha removida daqui)
-      console.log(`[Auth] Tentativa de login simulado para: ${email}`);
+      const { token, id, nome, iniciais, telefone } = response.data;
 
-      /* * NOTA DE ARQUITETURA:
-       * Como ainda não há Backend real, mantivemos o Mock.
-       * Para produção real (com dados sensíveis), substitua o bloco abaixo por:
-       * const response = await api.post('/sessions', { email, senha });
-       * setUsuario(response.data.user);
-       */
-
-      // Mock de Usuário para Demonstração
-      const usuarioMock: Usuario = {
-        id: '1',
-        nome: 'Psicólogo Silva', // Em um app real, viria do banco de dados
+      const usuarioLogado = {
+        id,
+        nome,
         email,
-        telefone: '(11) 99999-9999',
-        iniciais: 'PS',
-      };
+        token,
+        iniciais,
+        telefone: telefone || '', 
+        foto: undefined
+      } as Usuario;
 
-      setUsuario(usuarioMock);
+      setUsuario(usuarioLogado);
+      addToast({ type: 'success', title: 'Login realizado com sucesso!' });
+      
+      // Pequeno delay para garantir que o state atualizou antes de trocar de página
+      setTimeout(() => navigate('/dashboard'), 100);
+
     } catch (error) {
       console.error('Erro ao realizar login:', error);
-      throw error; // Importante: relança o erro para o componente de Login exibir o Toast de erro
+      
+      // CORREÇÃO 4: Tratamento de erro seguro sem 'any'
+      const err = error as { response?: { status: number } };
+      
+      if (err.response?.status === 403 || err.response?.status === 401) {
+        addToast({ type: 'error', title: 'E-mail ou senha incorretos.' });
+      } else {
+        addToast({ type: 'error', title: 'Erro ao conectar com o servidor.' });
+      }
+      
+      throw error;
+    } finally {
+      setLoading(false);
     }
   };
 
   const logout = () => {
     setUsuario(null);
     navigate('/login');
+    addToast({ type: 'info', title: 'Você saiu do sistema.' });
   };
 
   const atualizarPerfil = (dados: Partial<Usuario>) => {
@@ -76,6 +104,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setUsuario(prev =>
       prev ? { ...prev, ...dados, iniciais: novasIniciais } : null
     );
+    addToast({ type: 'success', title: 'Perfil atualizado!' });
   };
 
   const salvarFotoCortada = (base64Image: string) => {
@@ -89,7 +118,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (!usuario) return;
     setUsuario(prev => {
       if (!prev) return null;
-      // Adicionamos ': _' para renomear a variável 'foto' para '_' (descarte)
       // eslint-disable-next-line @typescript-eslint/no-unused-vars
       const { foto: _, ...rest } = prev;
       return rest as Usuario;
@@ -105,6 +133,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         atualizarPerfil,
         salvarFotoCortada,
         removerFoto,
+        loading
       }}
     >
       {children}
