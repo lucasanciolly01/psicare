@@ -10,14 +10,11 @@ import {
   Edit,
   FileText,
   Eye,
-  // ADICIONE ESTA LINHA:
-  Calendar as CalendarIcon, 
+  Calendar as CalendarIcon, // Adicionado para corrigir o erro TS2304
 } from "lucide-react";
 import { Modal } from "../components/ui/Modal";
-// CORREÇÃO 1: Removido 'type Paciente' do import do contexto
 import { usePacientes } from "../context/PacientesContext";
-// CORREÇÃO 1: Adicionado import correto do tipo Paciente global
-import type { Paciente } from "../types";
+import type { Paciente, StatusPaciente } from "../types"; // Importamos os tipos corretos
 import { PatientDetailsModal } from "../components/pacientes/PatientDetailsModal";
 
 export function Pacientes() {
@@ -36,13 +33,13 @@ export function Pacientes() {
     null
   );
 
-  // CORREÇÃO 2: Status inicial em Maiúsculo para bater com os types
+  // CORREÇÃO: Status inicial "ATIVO" (Maiúsculo)
   const [novoPaciente, setNovoPaciente] = useState({
     nome: "",
     email: "",
     telefone: "",
     dataNascimento: "",
-    status: "ATIVO" as Paciente["status"],
+    status: "ATIVO" as StatusPaciente,
     queixaPrincipal: "",
     historicoFamiliar: "",
     observacoesIniciais: "",
@@ -71,7 +68,7 @@ export function Pacientes() {
             email: paciente.email || "",
             telefone: paciente.telefone,
             dataNascimento: paciente.dataNascimento || "",
-            status: paciente.status,
+            status: paciente.status, // Já vem como ATIVO/PAUSA do context
             queixaPrincipal: paciente.queixaPrincipal || "",
             historicoFamiliar: paciente.historicoFamiliar || "",
             observacoesIniciais: paciente.observacoesIniciais || "",
@@ -87,7 +84,7 @@ export function Pacientes() {
           email: "",
           telefone: "",
           dataNascimento: "",
-          status: "ATIVO", // Default em Maiúsculo
+          status: "ATIVO", // Reset para Maiúsculo
           queixaPrincipal: "",
           historicoFamiliar: "",
           observacoesIniciais: "",
@@ -124,20 +121,18 @@ export function Pacientes() {
     const matchNome = paciente.nome
       .toLowerCase()
       .includes(termoBusca.toLowerCase());
-    
-    // CORREÇÃO 3: Filtro de status agora compara com Maiúsculo (ou converte se necessário)
-    // Se o filtroStatus for 'todos', passa. Se não, compara exato (o select value abaixo foi ajustado)
+
+    // CORREÇÃO: Comparação direta (ambos Maiúsculos agora)
     const matchStatus =
       filtroStatus === "todos" || paciente.status === filtroStatus;
-    
+
     return matchNome && matchStatus;
   });
 
-  // CORREÇÃO 4: Componente Badge agora lida com os status em MAIÚSCULO do Java
+  // CORREÇÃO: Badge lida com Maiúsculas
   const StatusBadge = ({ status }: { status: string }) => {
-    // Normaliza para garantir comparação segura
     const s = status ? status.toUpperCase() : "ATIVO";
-    
+
     return (
       <span
         className={`px-2.5 py-0.5 rounded-full text-[10px] md:text-xs font-bold uppercase tracking-wide inline-flex items-center gap-1.5 border
@@ -204,7 +199,7 @@ export function Pacientes() {
           value={filtroStatus}
           onChange={(e) => setFiltroStatus(e.target.value)}
         >
-          {/* CORREÇÃO 5: Values do Select atualizados para MAIÚSCULO para bater com o filtro */}
+          {/* CORREÇÃO: Values em Maiúsculo para o filtro funcionar */}
           <option value="todos">Todos os Status</option>
           <option value="ATIVO">Ativos</option>
           <option value="PAUSA">Em Pausa</option>
@@ -213,7 +208,6 @@ export function Pacientes() {
       </div>
 
       <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
-        
         {/* === VISÃO MOBILE (Cards) === */}
         <div className="block md:hidden divide-y divide-gray-100">
           {pacientesFiltrados.map((paciente) => (
@@ -228,7 +222,7 @@ export function Pacientes() {
                       {paciente.nome}
                     </h3>
                     <div className="mt-1">
-                        <StatusBadge status={paciente.status} />
+                      <StatusBadge status={paciente.status} />
                     </div>
                   </div>
                 </div>
@@ -268,7 +262,9 @@ export function Pacientes() {
                     <div className="w-6 h-6 rounded-full bg-white flex items-center justify-center border border-gray-200 shrink-0 text-gray-400">
                       <Mail size={13} />
                     </div>
-                    <span className="truncate max-w-[220px]">{paciente.email}</span>
+                    <span className="truncate max-w-[220px]">
+                      {paciente.email}
+                    </span>
                   </div>
                 )}
 
@@ -276,7 +272,13 @@ export function Pacientes() {
                   <div className="w-6 h-6 rounded-full bg-white flex items-center justify-center border border-gray-200 shrink-0 text-gray-400">
                     <FileText size={13} />
                   </div>
-                  <span className={`${paciente.queixaPrincipal ? "text-green-600 font-medium" : "text-gray-500"}`}>
+                  <span
+                    className={`${
+                      paciente.queixaPrincipal
+                        ? "text-green-600 font-medium"
+                        : "text-gray-500"
+                    }`}
+                  >
                     {paciente.queixaPrincipal
                       ? "Prontuário Iniciado"
                       : "Aguardando Prontuário"}
@@ -386,7 +388,7 @@ export function Pacientes() {
         size="lg"
       >
         <form onSubmit={handleCadastro} className="space-y-6">
-           <div>
+          <div>
             <h4 className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-4 flex items-center gap-2">
               <User size={14} /> Dados Pessoais
             </h4>
@@ -433,7 +435,10 @@ export function Pacientes() {
                   Data de Nascimento
                 </label>
                 <div className="relative">
-                  <CalendarIcon size={18} className="absolute left-3 top-3.5 text-gray-400 pointer-events-none" />
+                  <CalendarIcon
+                    size={18}
+                    className="absolute left-3 top-3.5 text-gray-400 pointer-events-none"
+                  />
                   <input
                     type="date"
                     className="w-full pl-10 pr-4 h-12 border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all text-gray-600 bg-white text-base appearance-none"
@@ -454,16 +459,22 @@ export function Pacientes() {
                   E-mail (Opcional)
                 </label>
                 <div className="relative">
-                    <Mail size={18} className="absolute left-3 top-3.5 text-gray-400 pointer-events-none" />
-                    <input
+                  <Mail
+                    size={18}
+                    className="absolute left-3 top-3.5 text-gray-400 pointer-events-none"
+                  />
+                  <input
                     type="email"
                     className="w-full pl-10 pr-4 h-12 border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all text-base"
                     placeholder="paciente@email.com"
                     value={novoPaciente.email}
                     onChange={(e) =>
-                        setNovoPaciente({ ...novoPaciente, email: e.target.value })
+                      setNovoPaciente({
+                        ...novoPaciente,
+                        email: e.target.value,
+                      })
                     }
-                    />
+                  />
                 </div>
               </div>
 
@@ -477,11 +488,11 @@ export function Pacientes() {
                   onChange={(e) =>
                     setNovoPaciente({
                       ...novoPaciente,
-                      status: e.target.value as Paciente["status"],
+                      status: e.target.value as StatusPaciente,
                     })
                   }
                 >
-                  {/* CORREÇÃO 6: Values do Select do Modal em MAIÚSCULO */}
+                  {/* CORREÇÃO: Values em MAIÚSCULO */}
                   <option value="ATIVO">Ativo</option>
                   <option value="PAUSA">Pausado</option>
                   <option value="INATIVO">Inativos</option>
@@ -492,7 +503,7 @@ export function Pacientes() {
 
           <div className="border-t border-gray-100 pt-6">
             <h4 className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-4 flex items-center gap-2">
-              <FileText size={14} /> Dados do Prontuário
+              <FileText size={14} /> Dados do Prontuário (Opcional)
             </h4>
             <div className="space-y-4">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -501,6 +512,7 @@ export function Pacientes() {
                     Queixa Principal
                   </label>
                   <textarea
+                    // REMOVIDO: required
                     className="w-full p-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none h-24 resize-none text-base transition-all"
                     placeholder="Motivo da consulta..."
                     value={novoPaciente.queixaPrincipal}
@@ -517,6 +529,7 @@ export function Pacientes() {
                     Histórico Familiar
                   </label>
                   <textarea
+                    // REMOVIDO: required
                     className="w-full p-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none h-24 resize-none text-base transition-all"
                     placeholder="Histórico relevante..."
                     value={novoPaciente.historicoFamiliar}
@@ -536,6 +549,7 @@ export function Pacientes() {
                     Observações Iniciais
                   </label>
                   <textarea
+                    // REMOVIDO: required
                     className="w-full p-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none h-20 resize-none text-base transition-all"
                     placeholder="Observações gerais..."
                     value={novoPaciente.observacoesIniciais}
@@ -552,6 +566,7 @@ export function Pacientes() {
                     Anotações Privadas
                   </label>
                   <textarea
+                    // REMOVIDO: required
                     className="w-full p-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none h-20 resize-none text-base transition-all bg-yellow-50/50"
                     placeholder="Anotações administrativas..."
                     value={novoPaciente.anotacoes}
