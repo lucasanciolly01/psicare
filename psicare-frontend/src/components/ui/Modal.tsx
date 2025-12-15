@@ -1,68 +1,84 @@
-import { X } from 'lucide-react';
-import { type ReactNode, useEffect } from 'react';
-import { createPortal } from 'react-dom';
+import { useEffect, useState } from "react";
+import { X } from "lucide-react";
+import { createPortal } from "react-dom";
 
 interface ModalProps {
   isOpen: boolean;
   onClose: () => void;
   title: string;
-  children: ReactNode;
-  size?: 'sm' | 'md' | 'lg' | 'xl';
+  children: React.ReactNode;
+  size?: "sm" | "md" | "lg" | "xl";
 }
 
-export function Modal({ isOpen, onClose, title, children, size = 'md' }: ModalProps) {
-  // === CORREÇÃO: Removido o estado 'mounted' que causava setState em useEffect ===
-  // Em Vite (SPA), o document.body sempre existe, então não precisamos esperar montar.
-  
+export function Modal({
+  isOpen,
+  onClose,
+  title,
+  children,
+  size = "md",
+}: ModalProps) {
+  const [isVisible, setIsVisible] = useState(false);
+
   useEffect(() => {
-    const handleEsc = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') onClose();
-    };
     if (isOpen) {
-      window.addEventListener('keydown', handleEsc);
-      document.body.style.overflow = 'hidden';
+      setIsVisible(true);
+      document.body.style.overflow = "hidden";
+    } else {
+      const timer = setTimeout(() => setIsVisible(false), 300); // Tempo para animação de saída
+      document.body.style.overflow = "unset";
+      return () => clearTimeout(timer);
     }
     return () => {
-      window.removeEventListener('keydown', handleEsc);
-      document.body.style.overflow = 'unset';
+      document.body.style.overflow = "unset";
     };
-  }, [isOpen, onClose]);
+  }, [isOpen]);
 
-  if (!isOpen) return null;
+  if (!isVisible && !isOpen) return null;
 
   const sizeClasses = {
-    sm: 'md:max-w-sm',
-    md: 'md:max-w-lg',
-    lg: 'md:max-w-2xl',
-    xl: 'md:max-w-4xl'
+    sm: "max-w-md",
+    md: "max-w-2xl",
+    lg: "max-w-4xl",
+    xl: "max-w-6xl",
   };
 
   return createPortal(
-    <div className="fixed inset-0 z-[9999] flex items-end md:items-center justify-center md:p-4 bg-black/60 backdrop-blur-sm animate-fade-in touch-none">
-      
-      <div className="absolute inset-0 transition-opacity" onClick={onClose} />
-      
-      <div 
+    <div
+      className={`fixed inset-0 z-50 flex items-center justify-center p-4 transition-opacity duration-300 ${
+        isOpen ? "opacity-100" : "opacity-0"
+      }`}
+    >
+      {/* Backdrop com Blur */}
+      <div
+        className="absolute inset-0 bg-secondary-900/40 backdrop-blur-[2px] transition-all"
+        onClick={onClose}
+      />
+
+      {/* Conteúdo do Modal */}
+      <div
         className={`
-          bg-white w-full h-[100dvh] md:h-auto md:max-h-[90vh] 
-          md:rounded-2xl shadow-2xl flex flex-col relative z-10 
-          animate-slide-up md:animate-scale-in
+          relative w-full bg-surface rounded-2xl shadow-2xl border border-secondary-100 flex flex-col max-h-[90vh] 
+          transform transition-all duration-300 ease-out
           ${sizeClasses[size]}
+          ${isOpen ? "scale-100 translate-y-0" : "scale-95 translate-y-4"}
         `}
-        onClick={(e) => e.stopPropagation()}
       >
-        <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100 flex-shrink-0 bg-white md:rounded-t-2xl">
-          <h3 className="text-lg md:text-xl font-bold text-gray-800 line-clamp-1">{title}</h3>
-          <button 
+        {/* Header */}
+        <div className="flex items-center justify-between p-5 md:p-6 border-b border-secondary-100/80 bg-white rounded-t-2xl sticky top-0 z-10">
+          <h2 className="text-xl font-bold text-secondary-900 tracking-tight leading-none">
+            {title}
+          </h2>
+          <button
             onClick={onClose}
-            className="p-2 -mr-2 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-full transition-colors active:scale-95"
-            aria-label="Fechar modal"
+            className="p-2 -mr-2 text-secondary-400 hover:text-rose-500 hover:bg-rose-50 rounded-lg transition-colors"
+            title="Fechar"
           >
-            <X size={24} />
+            <X size={20} strokeWidth={2.5} />
           </button>
         </div>
 
-        <div className="flex-1 overflow-y-auto p-5 md:p-6 custom-scrollbar pb-safe">
+        {/* Body (Scrollável) */}
+        <div className="p-5 md:p-6 overflow-y-auto custom-scrollbar bg-surface rounded-b-2xl">
           {children}
         </div>
       </div>

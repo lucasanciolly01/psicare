@@ -1,133 +1,190 @@
 // src/pages/Dashboard.tsx
-import { Users, CalendarCheck, Clock, Plus, ArrowRight } from 'lucide-react';
-import { StatCard } from '../components/ui/StatCard';
-import { usePacientes } from '../context/PacientesContext';
-import { useAgendamentos } from '../context/AgendamentosContext';
-import { useAuth } from '../context/AuthContext';
-import { Link } from 'react-router-dom';
-import { format, parseISO, isToday } from 'date-fns';
-import { ptBR } from 'date-fns/locale';
+import {
+  Users,
+  CalendarCheck,
+  Clock,
+  Plus,
+  ArrowRight,
+  CalendarDays,
+} from "lucide-react";
+import { StatCard } from "../components/ui/StatCard";
+import { usePacientes } from "../context/PacientesContext";
+import { useAgendamentos } from "../context/AgendamentosContext";
+import { useAuth } from "../context/AuthContext";
+import { Link } from "react-router-dom";
+import { format, parseISO, isToday } from "date-fns";
+import { ptBR } from "date-fns/locale";
 
 export function Dashboard() {
   const { usuario } = useAuth();
   const { pacientes } = usePacientes();
-  
-  // Extraímos dados do Contexto
-  const { sessoesHoje, sessoesSemana, crescimentoSemanal, proximosAgendamentos } = useAgendamentos();
+  const {
+    sessoesHoje,
+    sessoesSemana,
+    crescimentoSemanal,
+    proximosAgendamentos,
+  } = useAgendamentos();
 
-  const totalAtivos = pacientes.filter(p => p.status === 'ATIVO').length;
+  const totalAtivos = pacientes.filter((p) => p.status === "ATIVO").length;
   const pacientesRecentes = pacientes.slice(0, 4);
 
   return (
-    <div className="space-y-8 animate-fade-in">
-      {/* Header Principal */}
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-end gap-4">
+    <div className="space-y-8 pb-8">
+      {/* Header com Boas-vindas */}
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-end gap-6 bg-surface p-6 sm:p-8 rounded-2xl shadow-card border border-secondary-100/50 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')]">
         <div>
-          <h1 className="text-3xl font-bold text-gray-800">
-            Bom dia, {usuario?.nome.split(' ')[0] || 'Doutor(a)'}!
+          <h1 className="text-2xl sm:text-3xl font-bold text-secondary-900 tracking-tight">
+            Olá,{" "}
+            <span className="text-primary-600">
+              {usuario?.nome.split(" ")[0] || "Doutor(a)"}
+            </span>
           </h1>
-          <p className="text-gray-500 mt-2">Aqui está o resumo da sua prática hoje.</p>
+          <p className="text-secondary-500 mt-2 font-medium">
+            Aqui está o resumo da sua prática hoje,{" "}
+            {format(new Date(), "d 'de' MMMM", { locale: ptBR })}.
+          </p>
         </div>
         <Link to="/agenda">
-           <button className="bg-primary hover:bg-green-700 text-white px-6 py-3 rounded-xl font-medium flex items-center gap-2 shadow-lg shadow-green-200 transition-all transform hover:-translate-y-1 active:scale-95">
-            <Plus size={20} /> Novo Agendamento
+          <button className="bg-primary-600 hover:bg-primary-700 text-white px-5 py-3 rounded-xl font-semibold flex items-center gap-2 shadow-lg shadow-primary-500/20 transition-all transform hover:-translate-y-0.5 active:scale-95 text-sm">
+            <Plus size={18} strokeWidth={2.5} /> Novo Agendamento
           </button>
         </Link>
       </div>
 
-      {/* Grid de Cards (Estatísticas) */}
+      {/* Grid de KPIs */}
       <section className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        
-        <StatCard 
-          title="Pacientes Ativos" 
-          value={totalAtivos} 
-          icon={Users} 
+        <StatCard
+          title="Pacientes Ativos"
+          value={totalAtivos}
+          icon={Users}
           color="blue"
-          description={`De ${pacientes.length} totais`} 
+          description="Total na base de dados"
         />
-        
-        <StatCard 
-          title="Sessões Hoje" 
-          value={sessoesHoje} 
-          icon={CalendarCheck} 
+
+        <StatCard
+          title="Sessões Hoje"
+          value={sessoesHoje}
+          icon={CalendarCheck}
           color="green"
-          description={format(new Date(), "'Dia' dd 'de' MMMM", { locale: ptBR })}
+          description="Agendamentos confirmados"
         />
-        
-        <StatCard 
-          title="Sessões na Semana" 
-          value={sessoesSemana} 
-          icon={Clock} 
+
+        <StatCard
+          title="Sessões na Semana"
+          value={sessoesSemana}
+          icon={Clock}
           color="purple"
           trendValue={crescimentoSemanal}
-          trendLabel="vs. semana passada"
+          trendLabel="vs. semana anterior"
         />
       </section>
 
-      {/* Grid Inferior */}
+      {/* Área de Conteúdo Dupla */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        
         {/* LISTA DE PRÓXIMOS ATENDIMENTOS */}
-        <div className="lg:col-span-2 bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-          
-          {/* --- ALTERAÇÃO AQUI: CABEÇALHO RESPONSIVO --- */}
-          {/* Mobile: Coluna (flex-col) | Tablet/PC: Linha (sm:flex-row) */}
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-6">
-            <h3 className="text-lg font-bold text-gray-800">Próximos Atendimentos</h3>
-            
-            <Link 
-              to="/agenda" 
-              className="inline-flex items-center text-sm font-medium text-primary hover:text-green-700 transition-colors group"
+        <div className="lg:col-span-2 bg-surface rounded-2xl shadow-card border border-secondary-100 flex flex-col">
+          <div className="p-6 border-b border-secondary-100 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div className="flex items-center gap-3">
+              <div className="p-2 bg-primary-50 text-primary-600 rounded-lg">
+                <CalendarDays size={20} />
+              </div>
+              <h3 className="text-lg font-bold text-secondary-900">
+                Próximos Atendimentos
+              </h3>
+            </div>
+
+            <Link
+              to="/agenda"
+              className="inline-flex items-center text-sm font-semibold text-primary-600 hover:text-primary-700 transition-colors group"
             >
-              Ver agenda completa 
-              {/* Seta animada ao passar o mouse */}
-              <ArrowRight size={16} className="ml-1 transition-transform group-hover:translate-x-1" />
+              Ver agenda
+              <ArrowRight
+                size={16}
+                className="ml-1 transition-transform group-hover:translate-x-1"
+              />
             </Link>
           </div>
-          {/* ------------------------------------------- */}
 
-          <div className="space-y-4">
+          <div className="p-4 space-y-3 flex-1">
             {proximosAgendamentos.length === 0 ? (
-               <p className="text-gray-400 text-center py-8 bg-gray-50 rounded-lg border border-dashed border-gray-200">
-                 Nenhum atendimento próximo.
-               </p>
+              <div className="flex flex-col items-center justify-center py-12 text-secondary-400">
+                <CalendarDays size={48} className="mb-3 opacity-20" />
+                <p className="font-medium">
+                  Sua agenda está livre por enquanto.
+                </p>
+              </div>
             ) : (
               proximosAgendamentos.map((sessao) => {
                 const isSessaoHoje = isToday(parseISO(sessao.data));
-                
+
                 return (
-                  <div key={sessao.id} className="flex items-center justify-between p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors cursor-pointer border border-transparent hover:border-gray-200">
-                    <div className="flex items-center gap-4">
-                      {/* Hora e Data */}
-                      <div className="text-center min-w-[60px]">
-                        <span className="block text-lg font-bold text-gray-800">{sessao.hora}</span>
+                  <div
+                    key={sessao.id}
+                    className="group flex items-center justify-between p-4 bg-white rounded-xl border border-secondary-100 hover:border-primary-200 hover:shadow-soft transition-all duration-200"
+                  >
+                    <div className="flex items-center gap-5">
+                      {/* Box de Horário */}
+                      <div
+                        className={`
+                        flex flex-col items-center justify-center min-w-[64px] h-[64px] rounded-lg border
+                        ${
+                          isSessaoHoje
+                            ? "bg-primary-50 border-primary-100 text-primary-700"
+                            : "bg-secondary-50 border-secondary-100 text-secondary-600"
+                        }
+                      `}
+                      >
+                        <span className="text-lg font-bold leading-none">
+                          {sessao.hora}
+                        </span>
                         {!isSessaoHoje && (
-                          <span className="block text-[10px] text-gray-500 uppercase font-bold">
-                            {format(parseISO(sessao.data), 'dd MMM', { locale: ptBR })}
+                          <span className="text-[10px] uppercase font-bold mt-1 opacity-70">
+                            {format(parseISO(sessao.data), "dd MMM", {
+                              locale: ptBR,
+                            })}
+                          </span>
+                        )}
+                        {isSessaoHoje && (
+                          <span className="text-[10px] font-bold mt-1">
+                            HOJE
                           </span>
                         )}
                       </div>
-                      
-                      {/* Indicador Visual de Status */}
-                      <div className={`w-1 h-10 rounded-full ${
-                        sessao.status === 'concluido' ? 'bg-green-500' : 
-                        sessao.status === 'cancelado' ? 'bg-red-500' : 'bg-blue-500'
-                      }`}></div>
-                      
+
                       {/* Dados do Paciente */}
                       <div>
-                        <h4 className="font-semibold text-gray-800">{sessao.pacienteNome}</h4>
-                        <p className="text-sm text-gray-500">{sessao.tipo}</p>
+                        <h4 className="font-bold text-secondary-900 text-base group-hover:text-primary-700 transition-colors">
+                          {sessao.pacienteNome}
+                        </h4>
+                        <div className="flex items-center gap-2 mt-1">
+                          <span className="text-xs font-medium text-secondary-500 px-2 py-0.5 bg-secondary-100 rounded-md">
+                            {sessao.tipo}
+                          </span>
+                          <span
+                            className={`w-2 h-2 rounded-full ${
+                              sessao.status === "concluido"
+                                ? "bg-emerald-500"
+                                : sessao.status === "cancelado"
+                                ? "bg-rose-500"
+                                : "bg-blue-500"
+                            }`}
+                          />
+                        </div>
                       </div>
                     </div>
 
-                    {/* Badge de Status (Visível apenas em telas maiores que mobile pequeno) */}
-                    <div className={`px-3 py-1 rounded-full text-xs font-medium hidden sm:block ${
-                      sessao.status === 'concluido' ? 'bg-green-100 text-green-700' : 
-                      sessao.status === 'cancelado' ? 'bg-red-100 text-red-700' :
-                      'bg-blue-100 text-blue-700'
-                    }`}>
-                      {sessao.status.charAt(0).toUpperCase() + sessao.status.slice(1)}
+                    {/* Status Badge */}
+                    <div
+                      className={`px-3 py-1 rounded-full text-xs font-bold hidden sm:block border ${
+                        sessao.status === "concluido"
+                          ? "bg-emerald-50 text-emerald-700 border-emerald-100"
+                          : sessao.status === "cancelado"
+                          ? "bg-rose-50 text-rose-700 border-rose-100"
+                          : "bg-blue-50 text-blue-700 border-blue-100"
+                      }`}
+                    >
+                      {sessao.status.charAt(0).toUpperCase() +
+                        sessao.status.slice(1)}
                     </div>
                   </div>
                 );
@@ -136,37 +193,63 @@ export function Dashboard() {
           </div>
         </div>
 
-        {/* Coluna Direita: Pacientes Recentes */}
-        <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6 flex flex-col h-full">
-          <h3 className="text-lg font-bold text-gray-800 mb-6">Pacientes Recentes</h3>
-          
-          <ul className="space-y-4 flex-1">
-            {pacientesRecentes.length === 0 ? (
-               <p className="text-gray-400 text-sm text-center py-4">Nenhum paciente cadastrado.</p>
-            ) : (
-              pacientesRecentes.map((paciente) => (
-                <li key={paciente.id} className="flex items-center gap-3 pb-3 border-b border-gray-50 last:border-0 last:pb-0">
-                  <div className="w-10 h-10 rounded-full bg-green-100 text-primary flex items-center justify-center font-bold text-sm">
-                    {paciente.nome.substring(0, 2).toUpperCase()}
-                  </div>
-                  <div>
-                    <span className="block text-sm font-medium text-gray-700">{paciente.nome}</span>
-                    <span className={`text-xs px-2 py-0.5 rounded-full ${
-                      paciente.status === 'ATIVO' ? 'bg-green-50 text-green-700' : 'bg-gray-100 text-gray-500'
-                    }`}>
-                      {paciente.status === 'ATIVO' ? 'Ativo' : paciente.status}
-                    </span>
-                  </div>
-                </li>
-              ))
-            )}
-          </ul>
-          
-          <Link to="/pacientes" className="w-full mt-6 py-2.5 text-sm text-center text-gray-600 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors font-medium">
-            Ver todos os pacientes
-          </Link>
-        </div>
+        {/* PACIENTES RECENTES */}
+        <div className="bg-surface rounded-2xl shadow-card border border-secondary-100 flex flex-col h-full">
+          <div className="p-6 border-b border-secondary-100">
+            <h3 className="text-lg font-bold text-secondary-900">
+              Pacientes Recentes
+            </h3>
+          </div>
 
+          <div className="p-4 flex-1">
+            <ul className="space-y-2">
+              {pacientesRecentes.length === 0 ? (
+                <p className="text-secondary-400 text-sm text-center py-8">
+                  Nenhum paciente cadastrado.
+                </p>
+              ) : (
+                pacientesRecentes.map((paciente) => (
+                  <li
+                    key={paciente.id}
+                    className="flex items-center gap-4 p-3 rounded-xl hover:bg-secondary-50 transition-colors cursor-default"
+                  >
+                    <div className="w-10 h-10 rounded-full bg-gradient-to-br from-primary-100 to-primary-200 text-primary-700 flex items-center justify-center font-bold text-sm shadow-sm border border-white">
+                      {paciente.nome.substring(0, 2).toUpperCase()}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <span className="block text-sm font-semibold text-secondary-900 truncate">
+                        {paciente.nome}
+                      </span>
+                      <div className="flex items-center gap-1.5 mt-0.5">
+                        <span
+                          className={`w-1.5 h-1.5 rounded-full ${
+                            paciente.status === "ATIVO"
+                              ? "bg-emerald-500"
+                              : "bg-secondary-400"
+                          }`}
+                        />
+                        <span className="text-xs text-secondary-500 font-medium">
+                          {paciente.status === "ATIVO"
+                            ? "Ativo"
+                            : paciente.status}
+                        </span>
+                      </div>
+                    </div>
+                  </li>
+                ))
+              )}
+            </ul>
+          </div>
+
+          <div className="p-4 border-t border-secondary-100">
+            <Link
+              to="/pacientes"
+              className="block w-full py-3 text-sm text-center text-secondary-600 bg-secondary-50 hover:bg-secondary-100 hover:text-secondary-900 rounded-xl transition-all font-semibold border border-transparent hover:border-secondary-200"
+            >
+              Gerenciar Pacientes
+            </Link>
+          </div>
+        </div>
       </div>
     </div>
   );

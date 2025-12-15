@@ -1,7 +1,7 @@
 import { useState, useEffect, type FormEvent, useRef } from "react";
 import { useAuth } from "../context/AuthContext";
 import { useToast } from "../context/ToastContext";
-import { User, Phone, Mail, Save, Camera, Trash2, AlertTriangle } from "lucide-react";
+import { User, Phone, Mail, Save, Camera, Trash2 } from "lucide-react";
 import { ImageCropperModal } from "../components/ImageCropperModal"; 
 
 const formatPhoneNumber = (value: string) => {
@@ -33,15 +33,13 @@ export function Perfil() {
 
   useEffect(() => {
     if (usuario) {
-      // === CORREÇÃO: Só atualiza o estado se for diferente para evitar loops ===
       if (usuario.nome !== nome) setNome(usuario.nome);
       if (usuario.email !== email) setEmail(usuario.email);
-      
       const telFormatado = formatPhoneNumber(usuario.telefone);
       if (telFormatado !== telefone) setTelefone(telFormatado);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [usuario]); // Mantivemos o disable aqui pois só queremos atualizar quando 'usuario' mudar, não os estados locais.
+  }, [usuario]);
 
   const handleSubmit = (e: FormEvent) => {
     e.preventDefault();
@@ -52,7 +50,6 @@ export function Perfil() {
         title: 'Perfil atualizado',
         description: 'Seus dados foram salvos com sucesso.'
       });
-    // === CORREÇÃO: Removido 'error' não usado ===
     } catch {
       addToast({
         type: 'error',
@@ -88,9 +85,8 @@ export function Perfil() {
       addToast({
         type: 'success',
         title: 'Foto atualizada',
-        description: 'Sua nova foto de perfil foi ajustada e salva.'
+        description: 'Sua nova foto de perfil foi salva.'
       });
-    // === CORREÇÃO: Removido 'error' não usado ===
     } catch {
       addToast({ type: 'error', title: 'Erro', description: 'Falha ao salvar a imagem.' });
     }
@@ -102,46 +98,45 @@ export function Perfil() {
     addToast({
       type: 'info',
       title: 'Foto removida',
-      description: 'Sua foto de perfil foi excluída com sucesso.'
+      description: 'Sua foto de perfil foi excluída.'
     });
   };
 
   if (!usuario) return null;
 
   return (
-    <div className="p-4 md:p-6 animate-fade-in relative">
+    <div className="p-0 md:p-2 animate-fade-in relative max-w-4xl mx-auto">
+      
+      {/* Modais */}
       {showCropper && tempImageSrc && (
         <ImageCropperModal
           imageSrc={tempImageSrc}
-          onCancel={() => {
-            setShowCropper(false);
-            setTempImageSrc(null);
-          }}
+          onCancel={() => { setShowCropper(false); setTempImageSrc(null); }}
           onSave={handleCropperSave}
         />
       )}
 
       {showDeleteConfirm && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 animate-fade-in backdrop-blur-sm">
-          <div className="bg-white rounded-xl shadow-2xl w-full max-w-sm overflow-hidden scale-100 transition-transform">
+        <div className="fixed inset-0 z-[60] flex items-center justify-center bg-secondary-900/40 p-4 animate-fade-in backdrop-blur-sm">
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-sm overflow-hidden scale-100 transition-transform border border-secondary-100">
             <div className="p-6 flex flex-col items-center text-center">
-              <div className="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center mb-4">
-                <AlertTriangle className="text-red-600" size={24} />
+              <div className="w-14 h-14 bg-rose-50 rounded-full flex items-center justify-center mb-4 ring-8 ring-rose-50/50">
+                <Trash2 className="text-rose-500" size={24} />
               </div>
-              <h3 className="text-lg font-bold text-gray-900 mb-2">Remover foto?</h3>
-              <p className="text-gray-500 text-sm mb-6">
-                Tem certeza que deseja remover sua foto de perfil? Esta ação voltará a exibir suas iniciais.
+              <h3 className="text-lg font-bold text-secondary-900 mb-2">Remover foto?</h3>
+              <p className="text-secondary-500 text-sm mb-6 leading-relaxed">
+                Você voltará a usar as iniciais do seu nome como avatar. Essa ação não pode ser desfeita.
               </p>
               <div className="flex gap-3 w-full">
                 <button
                   onClick={() => setShowDeleteConfirm(false)}
-                  className="flex-1 px-4 py-2 border border-gray-200 text-gray-700 rounded-lg hover:bg-gray-50 font-medium transition-colors"
+                  className="flex-1 px-4 py-2.5 border border-secondary-200 text-secondary-700 rounded-xl hover:bg-secondary-50 font-bold transition-colors"
                 >
                   Cancelar
                 </button>
                 <button
                   onClick={confirmDeletePhoto}
-                  className="flex-1 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 font-medium shadow-sm transition-colors"
+                  className="flex-1 px-4 py-2.5 bg-rose-600 text-white rounded-xl hover:bg-rose-700 font-bold shadow-lg shadow-rose-200 transition-colors"
                 >
                   Sim, remover
                 </button>
@@ -151,93 +146,113 @@ export function Perfil() {
         </div>
       )}
 
-      <h1 className="text-2xl font-bold text-primary mb-6">Meu Perfil</h1>
+      {/* Header da Página */}
+      <div className="mb-6">
+         <h1 className="text-2xl font-bold text-secondary-900 tracking-tight">Configurações de Perfil</h1>
+         <p className="text-secondary-500 text-sm font-medium">Gerencie suas informações pessoais e aparência.</p>
+      </div>
 
-      <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
-        <div className="h-32 bg-gradient-to-r from-green-50 to-primary/10"></div>
-        <div className="px-6 md:px-8 pb-8">
-          <div className="relative -mt-16 mb-8 flex justify-center md:justify-start w-fit mx-auto md:mx-0">
+      <div className="bg-surface rounded-2xl shadow-card border border-secondary-100 overflow-hidden">
+        {/* Banner Decorativo */}
+        <div className="h-40 bg-gradient-to-r from-primary-600 via-primary-500 to-primary-700 relative overflow-hidden">
+           <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] opacity-20"></div>
+           <div className="absolute -bottom-10 -right-10 w-64 h-64 bg-white/10 rounded-full blur-3xl"></div>
+        </div>
+        
+        <div className="px-6 md:px-10 pb-10">
+          
+          {/* Avatar Section */}
+          <div className="relative -mt-20 mb-8 flex flex-col md:flex-row items-center md:items-end gap-6">
             <div className="relative group">
-              <div className="w-32 h-32 rounded-full border-4 border-white shadow-md overflow-hidden bg-gray-100 flex items-center justify-center relative z-10">
+              <div className="w-36 h-36 rounded-full border-[5px] border-white shadow-xl overflow-hidden bg-secondary-100 flex items-center justify-center relative z-10">
                 {usuario.foto ? (
                   <img src={usuario.foto} alt="Perfil" className="w-full h-full object-cover" />
                 ) : (
-                  <span className="text-4xl font-bold text-gray-300">{usuario.iniciais}</span>
+                  <span className="text-4xl font-bold text-secondary-400">{usuario.iniciais}</span>
                 )}
               </div>
-              <div className="absolute -bottom-2 -right-2 flex gap-2 z-20">
+              
+              {/* Botões do Avatar */}
+              <div className="absolute bottom-1 right-0 flex gap-2 z-20">
                 <button 
                   onClick={() => fileInputRef.current?.click()}
-                  className="bg-primary text-white p-2.5 rounded-full cursor-pointer hover:bg-green-700 shadow-lg transition-all hover:scale-105 active:scale-95 flex items-center justify-center" 
+                  className="bg-secondary-900 text-white p-2.5 rounded-full cursor-pointer hover:bg-primary-600 shadow-lg ring-4 ring-white transition-all hover:scale-110 active:scale-95 flex items-center justify-center" 
                   title="Alterar foto"
                 >
-                  <Camera size={18} />
-                  <input 
-                    ref={fileInputRef}
-                    type="file" 
-                    className="hidden" 
-                    accept="image/*" 
-                    onChange={onFileSelect} 
-                  />
+                  <Camera size={16} strokeWidth={2.5} />
+                  <input ref={fileInputRef} type="file" className="hidden" accept="image/*" onChange={onFileSelect} />
                 </button>
                 {usuario.foto && (
                    <button 
                    onClick={() => setShowDeleteConfirm(true)}
-                   className="bg-white text-red-500 border border-red-100 p-2.5 rounded-full cursor-pointer hover:bg-red-50 shadow-lg transition-all hover:scale-105 active:scale-95 flex items-center justify-center" 
+                   className="bg-white text-rose-500 border border-secondary-200 p-2.5 rounded-full cursor-pointer hover:bg-rose-50 shadow-md transition-all hover:scale-110 active:scale-95 flex items-center justify-center" 
                    title="Remover foto"
                  >
-                   <Trash2 size={18} />
+                   <Trash2 size={16} />
                  </button>
                 )}
               </div>
             </div>
+
+            <div className="text-center md:text-left pb-2">
+               <h2 className="text-2xl font-bold text-secondary-900">{usuario.nome}</h2>
+               <p className="text-secondary-500 font-medium flex items-center gap-1.5 justify-center md:justify-start">
+                 <Mail size={14} /> {usuario.email}
+               </p>
+            </div>
           </div>
 
-          <form onSubmit={handleSubmit} className="space-y-5">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Nome Completo</label>
-                <div className="relative">
-                  <User size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+          <form onSubmit={handleSubmit} className="space-y-6 max-w-3xl">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              
+              <div className="space-y-1.5">
+                <label className="block text-xs font-bold text-secondary-700 uppercase tracking-wide ml-1">Nome Completo</label>
+                <div className="relative group">
+                  <User size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-secondary-400 group-focus-within:text-primary-600 transition-colors" />
                   <input
                     type="text"
                     value={nome}
                     onChange={(e) => setNome(e.target.value)}
-                    className="w-full pl-10 pr-3 py-2.5 border border-gray-200 rounded-lg focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all"
+                    className="w-full pl-11 pr-4 py-3.5 bg-secondary-50 border border-secondary-200 rounded-xl focus:ring-4 focus:ring-primary-500/10 focus:border-primary-500 outline-none transition-all font-medium text-secondary-900 focus:bg-white"
                   />
                 </div>
               </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Telefone</label>
-                <div className="relative">
-                  <Phone size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+
+              <div className="space-y-1.5">
+                <label className="block text-xs font-bold text-secondary-700 uppercase tracking-wide ml-1">Telefone</label>
+                <div className="relative group">
+                  <Phone size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-secondary-400 group-focus-within:text-primary-600 transition-colors" />
                   <input
                     type="tel"
                     value={telefone}
                     onChange={handlePhoneChange}
                     maxLength={15}
                     placeholder="(00) 00000-0000"
-                    className="w-full pl-10 pr-3 py-2.5 border border-gray-200 rounded-lg focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all"
+                    className="w-full pl-11 pr-4 py-3.5 bg-secondary-50 border border-secondary-200 rounded-xl focus:ring-4 focus:ring-primary-500/10 focus:border-primary-500 outline-none transition-all font-medium text-secondary-900 focus:bg-white"
                   />
                 </div>
               </div>
-              <div className="md:col-span-2">
-                <label className="block text-sm font-medium text-gray-700 mb-1">E-mail</label>
-                <div className="relative">
-                  <Mail size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+
+              <div className="md:col-span-2 space-y-1.5">
+                <label className="block text-xs font-bold text-secondary-700 uppercase tracking-wide ml-1">E-mail de Acesso</label>
+                <div className="relative group">
+                  <Mail size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-secondary-400 group-focus-within:text-primary-600 transition-colors" />
                   <input
                     type="email"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
-                    className="w-full pl-10 pr-3 py-2.5 border border-gray-200 rounded-lg focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all"
+                    className="w-full pl-11 pr-4 py-3.5 bg-secondary-50 border border-secondary-200 rounded-xl focus:ring-4 focus:ring-primary-500/10 focus:border-primary-500 outline-none transition-all font-medium text-secondary-900 focus:bg-white"
                   />
                 </div>
               </div>
             </div>
-            <hr className="border-gray-100 my-6" />
-            <div className="flex justify-end">
-              <button type="submit" className="w-full md:w-auto bg-primary hover:bg-green-700 text-white px-6 py-2.5 rounded-lg font-medium flex items-center justify-center gap-2 shadow-sm transition-all hover:-translate-y-0.5 active:scale-95">
-                <Save size={18} />
+
+            <div className="pt-6 border-t border-secondary-100 flex justify-end">
+              <button 
+                type="submit" 
+                className="w-full md:w-auto bg-primary-600 hover:bg-primary-700 text-white px-8 py-3.5 rounded-xl font-bold flex items-center justify-center gap-2 shadow-lg shadow-primary-500/20 transition-all hover:-translate-y-0.5 active:scale-95"
+              >
+                <Save size={18} strokeWidth={2.5} />
                 Salvar Alterações
               </button>
             </div>

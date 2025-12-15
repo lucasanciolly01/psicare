@@ -10,11 +10,11 @@ import {
   Edit,
   FileText,
   Eye,
-  Calendar as CalendarIcon, // Adicionado para corrigir o erro TS2304
+  Filter,
 } from "lucide-react";
 import { Modal } from "../components/ui/Modal";
 import { usePacientes } from "../context/PacientesContext";
-import type { Paciente, StatusPaciente } from "../types"; // Importamos os tipos corretos
+import type { Paciente, StatusPaciente } from "../types";
 import { PatientDetailsModal } from "../components/pacientes/PatientDetailsModal";
 
 export function Pacientes() {
@@ -33,7 +33,6 @@ export function Pacientes() {
     null
   );
 
-  // CORREÇÃO: Status inicial "ATIVO" (Maiúsculo)
   const [novoPaciente, setNovoPaciente] = useState({
     nome: "",
     email: "",
@@ -68,7 +67,7 @@ export function Pacientes() {
             email: paciente.email || "",
             telefone: paciente.telefone,
             dataNascimento: paciente.dataNascimento || "",
-            status: paciente.status, // Já vem como ATIVO/PAUSA do context
+            status: paciente.status,
             queixaPrincipal: paciente.queixaPrincipal || "",
             historicoFamiliar: paciente.historicoFamiliar || "",
             observacoesIniciais: paciente.observacoesIniciais || "",
@@ -84,7 +83,7 @@ export function Pacientes() {
           email: "",
           telefone: "",
           dataNascimento: "",
-          status: "ATIVO", // Reset para Maiúsculo
+          status: "ATIVO",
           queixaPrincipal: "",
           historicoFamiliar: "",
           observacoesIniciais: "",
@@ -121,168 +120,153 @@ export function Pacientes() {
     const matchNome = paciente.nome
       .toLowerCase()
       .includes(termoBusca.toLowerCase());
-
-    // CORREÇÃO: Comparação direta (ambos Maiúsculos agora)
     const matchStatus =
       filtroStatus === "todos" || paciente.status === filtroStatus;
-
     return matchNome && matchStatus;
   });
 
-  // CORREÇÃO: Badge lida com Maiúsculas
   const StatusBadge = ({ status }: { status: string }) => {
     const s = status ? status.toUpperCase() : "ATIVO";
+    const classes =
+      s === "ATIVO"
+        ? "bg-emerald-50 text-emerald-700 border-emerald-100 ring-emerald-500/10"
+        : s === "PAUSA"
+        ? "bg-amber-50 text-amber-700 border-amber-100 ring-amber-500/10"
+        : "bg-slate-50 text-slate-600 border-slate-100 ring-slate-500/10";
+
+    const dotClass =
+      s === "ATIVO"
+        ? "bg-emerald-500"
+        : s === "PAUSA"
+        ? "bg-amber-500"
+        : "bg-slate-400";
+    const label =
+      s === "ATIVO" ? "Acompanhamento" : s === "PAUSA" ? "Pausado" : "Inativo";
 
     return (
       <span
-        className={`px-2.5 py-0.5 rounded-full text-[10px] md:text-xs font-bold uppercase tracking-wide inline-flex items-center gap-1.5 border
-        ${
-          s === "ATIVO"
-            ? "bg-green-50 text-green-700 border-green-100"
-            : s === "PAUSA"
-            ? "bg-yellow-50 text-yellow-700 border-yellow-100"
-            : "bg-gray-50 text-gray-600 border-gray-100"
-        }`}
+        className={`px-2.5 py-1 rounded-md text-[11px] font-bold uppercase tracking-wider inline-flex items-center gap-1.5 border ring-1 ring-inset ${classes}`}
       >
-        <span
-          className={`w-1.5 h-1.5 rounded-full ${
-            s === "ATIVO"
-              ? "bg-green-500"
-              : s === "PAUSA"
-              ? "bg-yellow-500"
-              : "bg-gray-400"
-          }`}
-        ></span>
-        {s === "ATIVO"
-          ? "Acompanhamento"
-          : s === "PAUSA"
-          ? "Pausado"
-          : "Inativo"}
+        <span className={`w-1.5 h-1.5 rounded-full ${dotClass}`}></span>
+        {label}
       </span>
     );
   };
 
   return (
-    <div className="space-y-6 pb-24 md:pb-0">
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+    <div className="space-y-6 pb-24 md:pb-0 animate-fade-in">
+      {/* Header */}
+      <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-gray-800">Pacientes</h1>
-          <p className="text-gray-500 text-sm">
-            Gerencie seus pacientes e prontuários
+          <h1 className="text-2xl font-bold text-secondary-900 tracking-tight">
+            Pacientes
+          </h1>
+          <p className="text-secondary-500 text-sm font-medium">
+            Central de prontuários e dados cadastrais.
           </p>
         </div>
 
         <button
           onClick={() => setIsCadastroOpen(true)}
-          className="w-full md:w-auto bg-primary hover:bg-green-700 text-white px-5 py-3 rounded-xl font-medium flex items-center justify-center gap-2 shadow-lg shadow-green-200 transition-all active:scale-95"
+          className="w-full md:w-auto bg-primary-600 hover:bg-primary-700 text-white px-5 py-3 rounded-xl font-bold flex items-center justify-center gap-2 shadow-lg shadow-primary-500/20 transition-all active:scale-95 text-sm"
         >
-          <Plus size={20} /> Novo Paciente
+          <Plus size={18} strokeWidth={2.5} /> Novo Paciente
         </button>
       </div>
 
-      <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-100 flex flex-col md:flex-row gap-4">
-        <div className="flex-1 relative">
+      {/* Toolbar */}
+      <div className="bg-surface p-2 rounded-2xl shadow-sm border border-secondary-100/60 flex flex-col md:flex-row gap-2">
+        <div className="flex-1 relative group">
           <Search
-            className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"
+            className="absolute left-4 top-1/2 -translate-y-1/2 text-secondary-400 group-focus-within:text-primary-600 transition-colors"
             size={20}
           />
           <input
             type="text"
             placeholder="Buscar por nome..."
-            className="w-full pl-10 pr-4 py-3 md:py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all text-base"
+            className="w-full pl-11 pr-4 py-3 bg-secondary-50/50 border border-transparent rounded-xl focus:bg-white focus:border-secondary-200 focus:ring-4 focus:ring-primary-500/10 outline-none transition-all font-medium text-secondary-900"
             value={termoBusca}
             onChange={(e) => setTermoBusca(e.target.value)}
           />
         </div>
-        <select
-          className="w-full md:w-auto border border-gray-200 rounded-lg px-4 py-3 md:py-2 outline-none focus:ring-2 focus:ring-primary/20 bg-white min-w-[150px] text-base"
-          value={filtroStatus}
-          onChange={(e) => setFiltroStatus(e.target.value)}
-        >
-          {/* CORREÇÃO: Values em Maiúsculo para o filtro funcionar */}
-          <option value="todos">Todos os Status</option>
-          <option value="ATIVO">Ativos</option>
-          <option value="PAUSA">Em Pausa</option>
-          <option value="INATIVO">Inativos</option>
-        </select>
+
+        <div className="relative group min-w-[200px]">
+          <Filter
+            className="absolute left-4 top-1/2 -translate-y-1/2 text-secondary-400 group-focus-within:text-primary-600 transition-colors pointer-events-none"
+            size={18}
+          />
+          <select
+            className="w-full pl-11 pr-8 py-3 bg-secondary-50/50 border border-transparent rounded-xl focus:bg-white focus:border-secondary-200 focus:ring-4 focus:ring-primary-500/10 outline-none transition-all font-medium text-secondary-700 appearance-none cursor-pointer"
+            value={filtroStatus}
+            onChange={(e) => setFiltroStatus(e.target.value)}
+          >
+            <option value="todos">Todos os Status</option>
+            <option value="ATIVO">Ativos</option>
+            <option value="PAUSA">Em Pausa</option>
+            <option value="INATIVO">Inativos</option>
+          </select>
+        </div>
       </div>
 
-      <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+      <div className="bg-surface rounded-2xl shadow-card border border-secondary-100 overflow-hidden">
         {/* === VISÃO MOBILE (Cards) === */}
-        <div className="block md:hidden divide-y divide-gray-100">
+        <div className="block md:hidden divide-y divide-secondary-100">
           {pacientesFiltrados.map((paciente) => (
-            <div key={paciente.id} className="p-4 flex flex-col gap-4">
+            <div
+              key={paciente.id}
+              className="p-5 flex flex-col gap-4 active:bg-secondary-50 transition-colors"
+            >
               <div className="flex items-start justify-between gap-3">
-                <div className="flex items-center gap-3 flex-1 min-w-0">
-                  <div className="w-12 h-12 rounded-full bg-green-100 text-primary flex-shrink-0 flex items-center justify-center font-bold text-lg border border-green-200">
+                <div className="flex items-center gap-3.5 flex-1 min-w-0">
+                  <div className="w-12 h-12 rounded-full bg-gradient-to-br from-primary-100 to-primary-200 text-primary-700 flex-shrink-0 flex items-center justify-center font-bold text-lg border border-white shadow-sm">
                     {paciente.nome.substring(0, 2).toUpperCase()}
                   </div>
                   <div className="flex flex-col min-w-0">
-                    <h3 className="font-bold text-gray-900 text-base truncate leading-tight">
+                    <h3 className="font-bold text-secondary-900 text-base truncate leading-tight">
                       {paciente.nome}
                     </h3>
-                    <div className="mt-1">
+                    <div className="mt-1.5">
                       <StatusBadge status={paciente.status} />
                     </div>
                   </div>
                 </div>
 
                 <div className="flex gap-1 shrink-0 ml-1">
+                  {/* Botões de Ação Mobile */}
                   <button
                     onClick={() => setPacienteVisualizar(paciente)}
-                    className="w-9 h-9 flex items-center justify-center text-gray-400 hover:text-primary bg-white hover:bg-green-50 rounded-lg border border-gray-200 transition-colors"
+                    className="p-2 text-secondary-400 hover:text-primary-600 hover:bg-primary-50 rounded-lg transition-colors"
                   >
-                    <Eye size={18} />
+                    <Eye size={20} />
                   </button>
                   <button
                     onClick={() => setPacienteEmEdicao(paciente.id)}
-                    className="w-9 h-9 flex items-center justify-center text-gray-400 hover:text-blue-500 bg-white hover:bg-blue-50 rounded-lg border border-gray-200 transition-colors"
+                    className="p-2 text-secondary-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
                   >
-                    <Edit size={18} />
-                  </button>
-                  <button
-                    onClick={() => setPacienteParaDeletar(paciente.id)}
-                    className="w-9 h-9 flex items-center justify-center text-gray-400 hover:text-red-500 bg-white hover:bg-red-50 rounded-lg border border-gray-200 transition-colors"
-                  >
-                    <Trash2 size={18} />
+                    <Edit size={20} />
                   </button>
                 </div>
               </div>
 
-              <div className="bg-gray-50/50 p-3.5 rounded-xl border border-gray-100 space-y-2.5">
-                <div className="flex items-center gap-3 text-sm text-gray-700">
-                  <div className="w-6 h-6 rounded-full bg-white flex items-center justify-center border border-gray-200 shrink-0 text-gray-400">
-                    <Phone size={13} />
-                  </div>
+              {/* Infos Mobile */}
+              <div className="bg-secondary-50/50 p-4 rounded-xl border border-secondary-100/50 space-y-3">
+                <div className="flex items-center gap-3 text-sm text-secondary-600">
+                  <Phone size={14} className="text-secondary-400" />
                   <span className="font-medium">{paciente.telefone}</span>
                 </div>
-
                 {paciente.email && (
-                  <div className="flex items-center gap-3 text-sm text-gray-700">
-                    <div className="w-6 h-6 rounded-full bg-white flex items-center justify-center border border-gray-200 shrink-0 text-gray-400">
-                      <Mail size={13} />
-                    </div>
-                    <span className="truncate max-w-[220px]">
-                      {paciente.email}
-                    </span>
+                  <div className="flex items-center gap-3 text-sm text-secondary-600">
+                    <Mail size={14} className="text-secondary-400" />
+                    <span className="truncate">{paciente.email}</span>
                   </div>
                 )}
-
-                <div className="flex items-center gap-3 text-sm text-gray-700 border-t border-gray-100 pt-2.5 mt-1">
-                  <div className="w-6 h-6 rounded-full bg-white flex items-center justify-center border border-gray-200 shrink-0 text-gray-400">
-                    <FileText size={13} />
-                  </div>
-                  <span
-                    className={`${
-                      paciente.queixaPrincipal
-                        ? "text-green-600 font-medium"
-                        : "text-gray-500"
-                    }`}
-                  >
+                <div className="border-t border-secondary-200/50 pt-2 mt-1">
+                  <p className="text-xs text-secondary-500 font-medium flex items-center gap-2">
+                    <FileText size={14} />
                     {paciente.queixaPrincipal
-                      ? "Prontuário Iniciado"
-                      : "Aguardando Prontuário"}
-                  </span>
+                      ? "Prontuário Ativo"
+                      : "Sem prontuário inicial"}
+                  </p>
                 </div>
               </div>
             </div>
@@ -293,48 +277,54 @@ export function Pacientes() {
         <div className="hidden md:block overflow-x-auto">
           <table className="w-full text-left border-collapse">
             <thead>
-              <tr className="bg-gray-50 border-b border-gray-100 text-xs uppercase text-gray-500 font-semibold tracking-wider">
-                <th className="px-6 py-4">Paciente</th>
+              <tr className="bg-secondary-50/50 border-b border-secondary-100 text-xs uppercase text-secondary-500 font-bold tracking-wider">
+                <th className="px-6 py-4 pl-8">Paciente</th>
                 <th className="px-6 py-4">Contato</th>
                 <th className="px-6 py-4">Status</th>
-                <th className="px-6 py-4 text-right">Ações</th>
+                <th className="px-6 py-4 text-right pr-8">Ações</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-gray-50">
+            <tbody className="divide-y divide-secondary-50">
               {pacientesFiltrados.map((paciente) => (
                 <tr
                   key={paciente.id}
-                  className="hover:bg-gray-50/50 transition-colors group"
+                  className="hover:bg-secondary-50/60 transition-colors group"
                 >
-                  <td className="px-6 py-4">
-                    <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 rounded-full bg-green-100 text-primary flex items-center justify-center font-bold text-sm">
+                  <td className="px-6 py-4 pl-8">
+                    <div className="flex items-center gap-4">
+                      <div className="w-10 h-10 rounded-full bg-primary-100 text-primary-700 flex items-center justify-center font-bold text-sm ring-4 ring-white shadow-sm">
                         {paciente.nome.substring(0, 2).toUpperCase()}
                       </div>
                       <div>
-                        <p className="font-semibold text-gray-900">
+                        <p className="font-bold text-secondary-900">
                           {paciente.nome}
                         </p>
-                        <p className="text-xs text-gray-500 flex items-center gap-1">
+                        <p className="text-xs text-secondary-400 font-medium flex items-center gap-1 mt-0.5">
                           {paciente.queixaPrincipal ? (
-                            <FileText size={12} />
-                          ) : null}
-                          {paciente.queixaPrincipal
-                            ? "Prontuário iniciado"
-                            : "Sem prontuário"}
+                            <>
+                              <FileText
+                                size={12}
+                                className="text-primary-500"
+                              />{" "}
+                              Prontuário ativo
+                            </>
+                          ) : (
+                            "Cadastro simples"
+                          )}
                         </p>
                       </div>
                     </div>
                   </td>
-                  <td className="px-6 py-4 text-gray-600">
-                    <div className="flex flex-col gap-1 text-sm">
-                      <div className="flex items-center gap-2">
-                        <Phone size={14} className="text-gray-400" />{" "}
+                  <td className="px-6 py-4">
+                    <div className="flex flex-col gap-1.5 text-sm">
+                      <div className="flex items-center gap-2 text-secondary-700 font-medium">
+                        <Phone size={14} className="text-secondary-400" />{" "}
                         {paciente.telefone}
                       </div>
                       {paciente.email && (
-                        <div className="flex items-center gap-2 text-xs text-gray-500">
-                          <Mail size={12} /> {paciente.email}
+                        <div className="flex items-center gap-2 text-xs text-secondary-500">
+                          <Mail size={12} className="text-secondary-300" />{" "}
+                          {paciente.email}
                         </div>
                       )}
                     </div>
@@ -342,25 +332,25 @@ export function Pacientes() {
                   <td className="px-6 py-4">
                     <StatusBadge status={paciente.status} />
                   </td>
-                  <td className="px-6 py-4 text-right">
-                    <div className="flex justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                  <td className="px-6 py-4 text-right pr-8">
+                    <div className="flex justify-end gap-1 opacity-0 group-hover:opacity-100 transition-all translate-x-2 group-hover:translate-x-0">
                       <button
                         onClick={() => setPacienteVisualizar(paciente)}
-                        className="p-2 text-gray-400 hover:text-primary hover:bg-green-50 rounded-lg transition-colors"
+                        className="p-2 text-secondary-400 hover:text-primary-600 hover:bg-primary-50 rounded-lg transition-colors"
                         title="Ver Prontuário"
                       >
                         <Eye size={18} />
                       </button>
                       <button
                         onClick={() => setPacienteEmEdicao(paciente.id)}
-                        className="p-2 text-gray-400 hover:text-blue-500 hover:bg-blue-50 rounded-lg transition-colors"
+                        className="p-2 text-secondary-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
                         title="Editar"
                       >
                         <Edit size={18} />
                       </button>
                       <button
                         onClick={() => setPacienteParaDeletar(paciente.id)}
-                        className="p-2 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors"
+                        className="p-2 text-secondary-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors"
                         title="Excluir"
                       >
                         <Trash2 size={18} />
@@ -374,33 +364,40 @@ export function Pacientes() {
         </div>
 
         {pacientesFiltrados.length === 0 && (
-          <div className="py-12 text-center text-gray-400 flex flex-col items-center">
-            <User size={48} className="opacity-20 mb-3" />
-            <p>Nenhum paciente encontrado.</p>
+          <div className="py-16 text-center text-secondary-400 flex flex-col items-center">
+            <div className="w-16 h-16 bg-secondary-50 rounded-full flex items-center justify-center mb-4">
+              <User size={32} className="opacity-40" />
+            </div>
+            <p className="font-medium">Nenhum paciente encontrado.</p>
+            <p className="text-sm mt-1 opacity-70">
+              Tente buscar por outro termo.
+            </p>
           </div>
         )}
       </div>
 
+      {/* === MODAL CADASTRO === */}
       <Modal
         isOpen={isCadastroOpen}
         onClose={fecharModalCadastro}
         title={pacienteEmEdicao ? "Editar Paciente" : "Novo Paciente"}
         size="lg"
       >
-        <form onSubmit={handleCadastro} className="space-y-6">
+        <form onSubmit={handleCadastro} className="space-y-8">
+          {/* Seção Pessoal */}
           <div>
-            <h4 className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-4 flex items-center gap-2">
-              <User size={14} /> Dados Pessoais
+            <h4 className="text-xs font-bold text-secondary-400 uppercase tracking-wider mb-4 flex items-center gap-2 border-b border-secondary-100 pb-2">
+              <User size={14} /> Informações Pessoais
             </h4>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
               <div className="md:col-span-2">
-                <label className="block text-sm font-medium text-gray-700 mb-1.5">
+                <label className="block text-sm font-bold text-secondary-700 mb-1.5 ml-1">
                   Nome Completo
                 </label>
                 <input
                   required
                   type="text"
-                  className="w-full px-4 h-12 border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all text-base"
+                  className="w-full px-4 h-12 border border-secondary-200 rounded-xl focus:ring-4 focus:ring-primary-500/10 focus:border-primary-500 outline-none transition-all font-medium text-secondary-900"
                   placeholder="Ex: João da Silva"
                   value={novoPaciente.nome}
                   onChange={(e) =>
@@ -410,110 +407,108 @@ export function Pacientes() {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1.5">
+                <label className="block text-sm font-bold text-secondary-700 mb-1.5 ml-1">
                   Telefone
                 </label>
-                <div className="relative">
-                  <Phone
-                    size={18}
-                    className="absolute left-3 top-3.5 text-gray-400 pointer-events-none"
-                  />
-                  <input
-                    required
-                    type="text"
-                    maxLength={15}
-                    className="w-full pl-10 pr-4 h-12 border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all text-base"
-                    placeholder="(00) 00000-0000"
-                    value={novoPaciente.telefone}
-                    onChange={handleTelefoneChange}
-                  />
-                </div>
+                <input
+                  required
+                  type="text"
+                  maxLength={15}
+                  className="w-full px-4 h-12 border border-secondary-200 rounded-xl focus:ring-4 focus:ring-primary-500/10 focus:border-primary-500 outline-none transition-all font-medium text-secondary-900"
+                  placeholder="(00) 00000-0000"
+                  value={novoPaciente.telefone}
+                  onChange={handleTelefoneChange}
+                />
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1.5">
+                <label className="block text-sm font-bold text-secondary-700 mb-1.5 ml-1">
                   Data de Nascimento
                 </label>
-                <div className="relative">
-                  <CalendarIcon
-                    size={18}
-                    className="absolute left-3 top-3.5 text-gray-400 pointer-events-none"
-                  />
-                  <input
-                    type="date"
-                    className="w-full pl-10 pr-4 h-12 border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all text-gray-600 bg-white text-base appearance-none"
-                    value={novoPaciente.dataNascimento}
-                    max={new Date().toISOString().split("T")[0]}
-                    onChange={(e) =>
-                      setNovoPaciente({
-                        ...novoPaciente,
-                        dataNascimento: e.target.value,
-                      })
-                    }
-                  />
-                </div>
-              </div>
-
-              <div className="md:col-span-2">
-                <label className="block text-sm font-medium text-gray-700 mb-1.5">
-                  E-mail (Opcional)
-                </label>
-                <div className="relative">
-                  <Mail
-                    size={18}
-                    className="absolute left-3 top-3.5 text-gray-400 pointer-events-none"
-                  />
-                  <input
-                    type="email"
-                    className="w-full pl-10 pr-4 h-12 border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all text-base"
-                    placeholder="paciente@email.com"
-                    value={novoPaciente.email}
-                    onChange={(e) =>
-                      setNovoPaciente({
-                        ...novoPaciente,
-                        email: e.target.value,
-                      })
-                    }
-                  />
-                </div>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1.5">
-                  Status
-                </label>
-                <select
-                  className="w-full px-4 h-12 border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none bg-white transition-all text-base"
-                  value={novoPaciente.status}
+                <input
+                  type="date"
+                  className="w-full px-4 h-12 border border-secondary-200 rounded-xl focus:ring-4 focus:ring-primary-500/10 focus:border-primary-500 outline-none transition-all text-secondary-900 font-medium"
+                  value={novoPaciente.dataNascimento}
+                  max={new Date().toISOString().split("T")[0]}
                   onChange={(e) =>
                     setNovoPaciente({
                       ...novoPaciente,
-                      status: e.target.value as StatusPaciente,
+                      dataNascimento: e.target.value,
                     })
                   }
-                >
-                  {/* CORREÇÃO: Values em MAIÚSCULO */}
-                  <option value="ATIVO">Ativo</option>
-                  <option value="PAUSA">Pausado</option>
-                  <option value="INATIVO">Inativos</option>
-                </select>
+                />
+              </div>
+
+              <div className="md:col-span-2">
+                <label className="block text-sm font-bold text-secondary-700 mb-1.5 ml-1">
+                  E-mail{" "}
+                  <span className="text-secondary-400 font-normal ml-1">
+                    (Opcional)
+                  </span>
+                </label>
+                <input
+                  type="email"
+                  className="w-full px-4 h-12 border border-secondary-200 rounded-xl focus:ring-4 focus:ring-primary-500/10 focus:border-primary-500 outline-none transition-all font-medium text-secondary-900"
+                  placeholder="paciente@email.com"
+                  value={novoPaciente.email}
+                  onChange={(e) =>
+                    setNovoPaciente({ ...novoPaciente, email: e.target.value })
+                  }
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-bold text-secondary-700 mb-1.5 ml-1">
+                  Status do Acompanhamento
+                </label>
+                <div className="relative">
+                  <select
+                    className="w-full px-4 h-12 border border-secondary-200 rounded-xl focus:ring-4 focus:ring-primary-500/10 focus:border-primary-500 outline-none bg-white transition-all font-medium text-secondary-900 appearance-none"
+                    value={novoPaciente.status}
+                    onChange={(e) =>
+                      setNovoPaciente({
+                        ...novoPaciente,
+                        status: e.target.value as StatusPaciente,
+                      })
+                    }
+                  >
+                    <option value="ATIVO">Ativo</option>
+                    <option value="PAUSA">Pausado</option>
+                    <option value="INATIVO">Inativo</option>
+                  </select>
+                  {/* Seta customizada */}
+                  <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-secondary-400">
+                    <svg
+                      width="12"
+                      height="12"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    >
+                      <path d="m6 9 6 6 6-6" />
+                    </svg>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
 
-          <div className="border-t border-gray-100 pt-6">
-            <h4 className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-4 flex items-center gap-2">
-              <FileText size={14} /> Dados do Prontuário (Opcional)
+          {/* Seção Prontuário */}
+          <div>
+            <h4 className="text-xs font-bold text-secondary-400 uppercase tracking-wider mb-4 flex items-center gap-2 border-b border-secondary-100 pb-2">
+              <FileText size={14} /> Dados do Prontuário Inicial
             </h4>
             <div className="space-y-4">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                  <label className="block text-sm font-bold text-secondary-700 mb-1.5 ml-1">
                     Queixa Principal
                   </label>
                   <textarea
-                    // REMOVIDO: required
-                    className="w-full p-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none h-24 resize-none text-base transition-all"
+                    className="w-full p-4 border border-secondary-200 rounded-xl focus:ring-4 focus:ring-primary-500/10 focus:border-primary-500 outline-none h-24 resize-none text-sm transition-all"
                     placeholder="Motivo da consulta..."
                     value={novoPaciente.queixaPrincipal}
                     onChange={(e) =>
@@ -525,12 +520,11 @@ export function Pacientes() {
                   ></textarea>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                  <label className="block text-sm font-bold text-secondary-700 mb-1.5 ml-1">
                     Histórico Familiar
                   </label>
                   <textarea
-                    // REMOVIDO: required
-                    className="w-full p-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none h-24 resize-none text-base transition-all"
+                    className="w-full p-4 border border-secondary-200 rounded-xl focus:ring-4 focus:ring-primary-500/10 focus:border-primary-500 outline-none h-24 resize-none text-sm transition-all"
                     placeholder="Histórico relevante..."
                     value={novoPaciente.historicoFamiliar}
                     onChange={(e) =>
@@ -545,13 +539,12 @@ export function Pacientes() {
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Observações Iniciais
+                  <label className="block text-sm font-bold text-secondary-700 mb-1.5 ml-1">
+                    Observações Gerais
                   </label>
                   <textarea
-                    // REMOVIDO: required
-                    className="w-full p-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none h-20 resize-none text-base transition-all"
-                    placeholder="Observações gerais..."
+                    className="w-full p-4 border border-secondary-200 rounded-xl focus:ring-4 focus:ring-primary-500/10 focus:border-primary-500 outline-none h-24 resize-none text-sm transition-all"
+                    placeholder="Observações..."
                     value={novoPaciente.observacoesIniciais}
                     onChange={(e) =>
                       setNovoPaciente({
@@ -562,13 +555,12 @@ export function Pacientes() {
                   ></textarea>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Anotações Privadas
+                  <label className="text-sm font-bold text-amber-700 mb-1.5 ml-1 flex items-center gap-1">
+                    Anotações Privadas <AlertTriangle size={12} />
                   </label>
                   <textarea
-                    // REMOVIDO: required
-                    className="w-full p-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none h-20 resize-none text-base transition-all bg-yellow-50/50"
-                    placeholder="Anotações administrativas..."
+                    className="w-full p-4 border border-amber-200 bg-amber-50/50 rounded-xl focus:ring-4 focus:ring-amber-500/10 focus:border-amber-400 outline-none h-24 resize-none text-sm transition-all placeholder:text-amber-700/50 text-amber-900"
+                    placeholder="Visível apenas para você..."
                     value={novoPaciente.anotacoes}
                     onChange={(e) =>
                       setNovoPaciente({
@@ -582,17 +574,17 @@ export function Pacientes() {
             </div>
           </div>
 
-          <div className="pt-4 flex flex-col-reverse md:flex-row gap-3 border-t border-gray-50">
+          <div className="pt-4 flex flex-col-reverse md:flex-row gap-3 border-t border-secondary-100">
             <button
               type="button"
               onClick={fecharModalCadastro}
-              className="flex-1 py-3.5 border border-gray-300 text-gray-700 rounded-xl font-bold hover:bg-gray-50 transition-colors"
+              className="flex-1 py-3.5 border border-secondary-200 text-secondary-700 rounded-xl font-bold hover:bg-secondary-50 transition-colors"
             >
               Cancelar
             </button>
             <button
               type="submit"
-              className="flex-1 py-3.5 bg-primary text-white rounded-xl font-bold hover:bg-green-700 shadow-md transition-all hover:-translate-y-0.5"
+              className="flex-1 py-3.5 bg-primary-600 text-white rounded-xl font-bold hover:bg-primary-700 shadow-lg shadow-primary-500/20 transition-all active:scale-95"
             >
               {pacienteEmEdicao ? "Salvar Alterações" : "Cadastrar Paciente"}
             </button>
@@ -600,30 +592,34 @@ export function Pacientes() {
         </form>
       </Modal>
 
+      {/* === MODAL EXCLUSÃO === */}
       <Modal
         isOpen={!!pacienteParaDeletar}
         onClose={() => setPacienteParaDeletar(null)}
         title="Excluir Paciente"
+        size="sm"
       >
-        <div className="text-center p-2">
-          <div className="bg-red-50 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4 text-red-500">
-            <AlertTriangle size={32} />
+        <div className="text-center pt-2">
+          <div className="bg-rose-50 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4 text-rose-500 ring-8 ring-rose-50/50">
+            <Trash2 size={32} />
           </div>
-          <h3 className="text-lg font-bold text-gray-900 mb-2">Tem certeza?</h3>
-          <p className="text-gray-500 mb-6 text-sm max-w-xs mx-auto">
-            Essa ação removerá permanentemente o prontuário e histórico deste
-            paciente.
+          <h3 className="text-lg font-bold text-secondary-900 mb-2">
+            Excluir prontuário?
+          </h3>
+          <p className="text-secondary-500 mb-8 text-sm max-w-xs mx-auto leading-relaxed">
+            Todos os dados, histórico e agendamentos deste paciente serão
+            apagados permanentemente.
           </p>
           <div className="flex gap-3">
             <button
               onClick={() => setPacienteParaDeletar(null)}
-              className="flex-1 py-3 border border-gray-300 rounded-xl text-gray-700 font-bold hover:bg-gray-50 transition-colors"
+              className="flex-1 py-3 border border-secondary-200 rounded-xl text-secondary-700 font-bold hover:bg-secondary-50 transition-colors"
             >
               Cancelar
             </button>
             <button
               onClick={confirmarExclusao}
-              className="flex-1 py-3 bg-red-600 text-white rounded-xl font-bold hover:bg-red-700 shadow-lg shadow-red-200 transition-colors"
+              className="flex-1 py-3 bg-rose-600 text-white rounded-xl font-bold hover:bg-rose-700 shadow-lg shadow-rose-200 transition-colors"
             >
               Sim, Excluir
             </button>
