@@ -1,66 +1,62 @@
-import { useEffect, useState } from "react";
-import { X } from "lucide-react";
-import { createPortal } from "react-dom";
+import { useEffect, useState } from 'react';
+import { X } from 'lucide-react';
+import { createPortal } from 'react-dom';
 
 interface ModalProps {
   isOpen: boolean;
   onClose: () => void;
   title: string;
   children: React.ReactNode;
-  size?: "sm" | "md" | "lg" | "xl";
+  size?: 'sm' | 'md' | 'lg' | 'xl';
 }
 
-export function Modal({
-  isOpen,
-  onClose,
-  title,
-  children,
-  size = "md",
-}: ModalProps) {
-  const [isVisible, setIsVisible] = useState(false);
+export function Modal({ isOpen, onClose, title, children, size = 'md' }: ModalProps) {
+  const [isVisible, setIsVisible] = useState(isOpen);
+
+  // CORREÇÃO: Atualiza o estado durante a renderização se o modal abrir.
+  // Isso evita o erro de "cascading renders" do useEffect e garante que isVisible seja true imediatamente.
+  if (isOpen && !isVisible) {
+    setIsVisible(true);
+  }
 
   useEffect(() => {
     if (isOpen) {
-      setIsVisible(true);
-      document.body.style.overflow = "hidden";
+      document.body.style.overflow = 'hidden';
     } else {
-      const timer = setTimeout(() => setIsVisible(false), 300); // Tempo para animação de saída
-      document.body.style.overflow = "unset";
+      // Ao fechar, aguarda a animação terminar antes de desmontar (isVisible = false)
+      const timer = setTimeout(() => setIsVisible(false), 300);
+      document.body.style.overflow = 'unset';
       return () => clearTimeout(timer);
     }
-    return () => {
-      document.body.style.overflow = "unset";
-    };
+    // Cleanup de segurança
+    return () => { document.body.style.overflow = 'unset'; };
   }, [isOpen]);
 
   if (!isVisible && !isOpen) return null;
 
   const sizeClasses = {
-    sm: "max-w-md",
-    md: "max-w-2xl",
-    lg: "max-w-4xl",
-    xl: "max-w-6xl",
+    sm: 'max-w-md',
+    md: 'max-w-2xl',
+    lg: 'max-w-4xl',
+    xl: 'max-w-6xl',
   };
 
   return createPortal(
-    <div
-      className={`fixed inset-0 z-50 flex items-center justify-center p-4 transition-opacity duration-300 ${
-        isOpen ? "opacity-100" : "opacity-0"
-      }`}
-    >
+    <div className={`fixed inset-0 z-50 flex items-center justify-center p-4 transition-opacity duration-300 ${isOpen ? 'opacity-100' : 'opacity-0'}`}>
+      
       {/* Backdrop com Blur */}
-      <div
+      <div 
         className="absolute inset-0 bg-secondary-900/40 backdrop-blur-[2px] transition-all"
         onClick={onClose}
       />
 
       {/* Conteúdo do Modal */}
-      <div
+      <div 
         className={`
           relative w-full bg-surface rounded-2xl shadow-2xl border border-secondary-100 flex flex-col max-h-[90vh] 
           transform transition-all duration-300 ease-out
           ${sizeClasses[size]}
-          ${isOpen ? "scale-100 translate-y-0" : "scale-95 translate-y-4"}
+          ${isOpen ? 'scale-100 translate-y-0' : 'scale-95 translate-y-4'}
         `}
       >
         {/* Header */}
