@@ -426,6 +426,7 @@ export function Pacientes() {
                   Data de Nascimento
                 </label>
                 <input
+                  required
                   type="date"
                   className="w-full px-4 h-12 border border-secondary-200 rounded-xl focus:ring-4 focus:ring-primary-500/10 focus:border-primary-500 outline-none transition-all text-secondary-900 font-medium"
                   value={novoPaciente.dataNascimento}
