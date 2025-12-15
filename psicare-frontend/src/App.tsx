@@ -1,5 +1,5 @@
 import { Suspense, lazy } from 'react';
-import { BrowserRouter, Routes, Route } from 'react-router-dom'; // <--- Removido 'Navigate'
+import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { AuthProvider } from './context/AuthContext';
 import { ToastProvider } from './context/ToastContext';
 import { PacientesProvider } from './context/PacientesContext';
@@ -22,6 +22,7 @@ const NotFound = lazy(() => import('./pages/NotFound'));
 const Dashboard = lazy(() => import('./pages/Dashboard').then(module => ({ default: module.Dashboard })));
 const Agenda = lazy(() => import('./pages/Agenda').then(module => ({ default: module.Agenda })));
 const Pacientes = lazy(() => import('./pages/Pacientes').then(module => ({ default: module.Pacientes })));
+const Financeiro = lazy(() => import('./pages/Financeiro').then(module => ({ default: module.Financeiro }))); // <--- NOVO
 const Perfil = lazy(() => import('./pages/Perfil').then(module => ({ default: module.Perfil })));
 
 export default function App() {
@@ -58,6 +59,12 @@ export default function App() {
                       <Route path="pacientes" element={
                         <Suspense fallback={<PageLoader />}>
                           <Pacientes />
+                        </Suspense>
+                      } />
+                      {/* NOVA ROTA FINANCEIRO */}
+                      <Route path="financeiro" element={
+                        <Suspense fallback={<PageLoader />}>
+                          <Financeiro />
                         </Suspense>
                       } />
                       <Route path="perfil" element={

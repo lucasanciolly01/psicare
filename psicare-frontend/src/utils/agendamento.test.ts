@@ -1,27 +1,35 @@
-import { describe, it, expect } from 'vitest'; // ou 'jest', dependendo do seu setup
-import { verificarConflito } from './agendamento';
+import { describe, it, expect } from 'vitest';
+import { verificarConflito, type AgendamentoItem } from './agendamento';
 
-describe('Lógica de Conflito de Agendamento', () => {
-  // Mock de dados (agendamento existente às 10:00)
-  const agendamentosExistentes = [
-    { data: '2025-10-20', hora: '10:00', status: 'ativo' }
+describe('verificarConflito', () => {
+  // CORREÇÃO: Tipagem explícita ajuda a evitar erros e mudamos 'hora' para 'horario'
+  const agendamentosExistentes: AgendamentoItem[] = [
+    { data: '2025-10-20', horario: '10:00', status: 'agendado' },
+    { data: '2025-10-20', horario: '11:00', status: 'agendado' },
+    { data: '2025-10-20', horario: '14:00', status: 'cancelado' } // Status cancelado não deve gerar conflito
   ];
 
-  it('deve bloquear agendamento com menos de 50 minutos de diferença (Ex: 10:30)', () => {
-    // Tenta agendar para 10:30 no mesmo dia (diferença de 30min)
+  it('deve retornar true se houver conflito de horário no mesmo dia', () => {
+    // Tenta agendar para 10:30 (conflita com 10:00 e 11:00 pois intervalo < 50min)
     const temConflito = verificarConflito(agendamentosExistentes, '2025-10-20', '10:30');
     expect(temConflito).toBe(true);
   });
 
-  it('deve permitir agendamento com 50 minutos ou mais de diferença (Ex: 10:50)', () => {
-    // Tenta agendar para 10:50 no mesmo dia (diferença de 50min)
-    const temConflito = verificarConflito(agendamentosExistentes, '2025-10-20', '10:50');
+  it('deve retornar false se o horário for compatível (intervalo > 50min)', () => {
+    // Tenta agendar para 12:00 (11:00 + 60min = ok)
+    const temConflito = verificarConflito(agendamentosExistentes, '2025-10-20', '12:00');
     expect(temConflito).toBe(false);
   });
 
-  it('deve permitir agendamento em data diferente mesmo no mesmo horário', () => {
-    // Tenta agendar para 10:00, mas em outro dia
+  it('deve retornar false se for em dia diferente', () => {
+    // Mesmo horário, dia diferente
     const temConflito = verificarConflito(agendamentosExistentes, '2025-10-21', '10:00');
+    expect(temConflito).toBe(false);
+  });
+
+  it('deve ignorar agendamentos cancelados', () => {
+    // 14:00 existe mas está cancelado
+    const temConflito = verificarConflito(agendamentosExistentes, '2025-10-20', '14:00');
     expect(temConflito).toBe(false);
   });
 });

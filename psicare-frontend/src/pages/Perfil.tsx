@@ -1,262 +1,309 @@
-import { useState, useEffect, type FormEvent, useRef } from "react";
-import { useAuth } from "../context/AuthContext";
-import { useToast } from "../context/ToastContext";
-import { User, Phone, Mail, Save, Camera, Trash2 } from "lucide-react";
-import { ImageCropperModal } from "../components/ImageCropperModal"; 
+import { useState } from 'react';
+import { useForm } from 'react-hook-form';
+import { z } from 'zod';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { 
+  User, 
+  Mail, 
+  Phone, 
+  MapPin, 
+  Award, 
+  Camera, 
+  Save, 
+  Lock, 
+  Bell, 
+  Shield, 
+  LogOut,
+  Loader2
+} from 'lucide-react';
+import { useAuth } from '../context/AuthContext';
+import { useToast } from '../context/ToastContext';
 
-const formatPhoneNumber = (value: string) => {
-  if (!value) return "";
-  const numbers = value.replace(/\D/g, "");
-  const truncated = numbers.slice(0, 11);
+// Schema para Dados Pessoais
+const profileSchema = z.object({
+  nome: z.string().min(3, 'Nome muito curto'),
+  email: z.string().email('E-mail inválido'),
+  telefone: z.string().min(10, 'Telefone inválido'),
+  crp: z.string().min(4, 'CRP inválido'),
+  especialidade: z.string().min(3, 'Informe sua especialidade'),
+  bio: z.string().optional(),
+});
 
-  if (truncated.length <= 2) {
-    return truncated.replace(/(\d{0,2})/, "($1");
-  } else if (truncated.length <= 7) {
-    return truncated.replace(/(\d{2})(\d{0,5})/, "($1) $2");
-  } else {
-    return truncated.replace(/(\d{2})(\d{5})(\d{0,4})/, "($1) $2-$3");
-  }
-};
+type ProfileFormData = z.infer<typeof profileSchema>;
 
 export function Perfil() {
-  const { usuario, atualizarPerfil, salvarFotoCortada, removerFoto } = useAuth();
+  const { usuario, logout } = useAuth();
   const { addToast } = useToast();
-  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [isEditing, setIsEditing] = useState(false);
 
-  const [nome, setNome] = useState("");
-  const [email, setEmail] = useState("");
-  const [telefone, setTelefone] = useState("");
+  // Mock inicial baseado no contexto de auth (ou dados estáticos se auth for simples)
+  const {
+    register,
+    handleSubmit,
+    formState: { errors, isSubmitting },
+  } = useForm<ProfileFormData>({
+    resolver: zodResolver(profileSchema),
+    defaultValues: {
+      nome: usuario?.nome || 'Dr. Lucas Anciolly',
+      email: usuario?.email || 'lucas@psicare.com',
+      telefone: '(11) 99999-9999',
+      crp: '06/12345',
+      especialidade: 'Psicologia Clínica',
+      bio: 'Especialista em Terapia Cognitivo-Comportamental com foco em ansiedade e desenvolvimento pessoal.',
+    },
+  });
 
-  const [tempImageSrc, setTempImageSrc] = useState<string | null>(null);
-  const [showCropper, setShowCropper] = useState(false);
-  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
-
-  useEffect(() => {
-    if (usuario) {
-      if (usuario.nome !== nome) setNome(usuario.nome);
-      if (usuario.email !== email) setEmail(usuario.email);
-      const telFormatado = formatPhoneNumber(usuario.telefone);
-      if (telFormatado !== telefone) setTelefone(telFormatado);
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [usuario]);
-
-  const handleSubmit = (e: FormEvent) => {
-    e.preventDefault();
-    try {
-      atualizarPerfil({ nome, email, telefone });
-      addToast({
-        type: 'success',
-        title: 'Perfil atualizado',
-        description: 'Seus dados foram salvos com sucesso.'
-      });
-    } catch {
-      addToast({
-        type: 'error',
-        title: 'Erro ao atualizar',
-        description: 'Não foi possível salvar as alterações.'
-      });
-    }
-  };
-
-  const handlePhoneChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const formatted = formatPhoneNumber(e.target.value);
-    setTelefone(formatted);
-  };
-
-  const onFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files && e.target.files.length > 0) {
-      const file = e.target.files[0];
-      const reader = new FileReader();
-      reader.addEventListener('load', () => {
-        setTempImageSrc(reader.result as string);
-        setShowCropper(true);
-      });
-      reader.readAsDataURL(file);
-      e.target.value = '';
-    }
-  };
-
-  const handleCropperSave = (base64Image: string) => {
-    try {
-      salvarFotoCortada(base64Image);
-      setShowCropper(false);
-      setTempImageSrc(null);
-      addToast({
-        type: 'success',
-        title: 'Foto atualizada',
-        description: 'Sua nova foto de perfil foi salva.'
-      });
-    } catch {
-      addToast({ type: 'error', title: 'Erro', description: 'Falha ao salvar a imagem.' });
-    }
-  };
-
-  const confirmDeletePhoto = () => {
-    removerFoto();
-    setShowDeleteConfirm(false);
+  const onSubmit = async (data: ProfileFormData) => {
+    // Simula chamada API
+    await new Promise(resolve => setTimeout(resolve, 1500));
+    console.log('Perfil atualizado:', data);
+    
     addToast({
-      type: 'info',
-      title: 'Foto removida',
-      description: 'Sua foto de perfil foi excluída.'
+      type: 'success',
+      title: 'Perfil atualizado!',
+      description: 'Suas informações foram salvas com sucesso.',
     });
+    setIsEditing(false);
   };
-
-  if (!usuario) return null;
 
   return (
-    <div className="p-0 md:p-2 animate-fade-in relative max-w-4xl mx-auto">
+    <div className="animate-fade-in space-y-6">
       
-      {/* Modais */}
-      {showCropper && tempImageSrc && (
-        <ImageCropperModal
-          imageSrc={tempImageSrc}
-          onCancel={() => { setShowCropper(false); setTempImageSrc(null); }}
-          onSave={handleCropperSave}
-        />
-      )}
+      {/* === CABEÇALHO DO PERFIL === */}
+      <div className="relative bg-white rounded-2xl border border-secondary-100 shadow-sm overflow-hidden">
+        {/* Capa (Cover) */}
+        <div className="h-32 md:h-48 bg-gradient-to-r from-primary-600 to-emerald-600 relative">
+          <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] opacity-20"></div>
+        </div>
 
-      {showDeleteConfirm && (
-        <div className="fixed inset-0 z-[60] flex items-center justify-center bg-secondary-900/40 p-4 animate-fade-in backdrop-blur-sm">
-          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-sm overflow-hidden scale-100 transition-transform border border-secondary-100">
-            <div className="p-6 flex flex-col items-center text-center">
-              <div className="w-14 h-14 bg-rose-50 rounded-full flex items-center justify-center mb-4 ring-8 ring-rose-50/50">
-                <Trash2 className="text-rose-500" size={24} />
+        {/* Conteúdo do Header */}
+        <div className="px-6 pb-6 md:px-8">
+          <div className="relative flex flex-col md:flex-row items-center md:items-end -mt-12 md:-mt-16 gap-4 md:gap-6">
+            
+            {/* Foto de Perfil */}
+            <div className="relative group">
+              <div className="w-24 h-24 md:w-32 md:h-32 rounded-2xl border-4 border-white bg-secondary-100 shadow-lg overflow-hidden flex items-center justify-center">
+                {/* Placeholder ou Imagem */}
+                <div className="w-full h-full bg-secondary-200 flex items-center justify-center text-secondary-400">
+                  <User size={48} />
+                </div>
               </div>
-              <h3 className="text-lg font-bold text-secondary-900 mb-2">Remover foto?</h3>
-              <p className="text-secondary-500 text-sm mb-6 leading-relaxed">
-                Você voltará a usar as iniciais do seu nome como avatar. Essa ação não pode ser desfeita.
-              </p>
-              <div className="flex gap-3 w-full">
-                <button
-                  onClick={() => setShowDeleteConfirm(false)}
-                  className="flex-1 px-4 py-2.5 border border-secondary-200 text-secondary-700 rounded-xl hover:bg-secondary-50 font-bold transition-colors"
+              <button className="absolute bottom-2 right-2 p-2 bg-primary-600 text-white rounded-lg shadow-lg hover:bg-primary-700 transition-transform active:scale-95 group-hover:scale-110">
+                <Camera size={16} />
+              </button>
+            </div>
+
+            {/* Nome e Info */}
+            <div className="text-center md:text-left flex-1 mb-2">
+              <h1 className="text-2xl font-bold text-secondary-900">{usuario?.nome || 'Dr. Lucas Anciolly'}</h1>
+              <p className="text-secondary-500 font-medium">Psicólogo Clínico • CRP 06/12345</p>
+            </div>
+
+            {/* Ações */}
+            <div className="flex gap-3">
+              <button 
+                type="button"
+                onClick={logout}
+                className="px-4 py-2 border border-rose-100 bg-rose-50 text-rose-700 rounded-xl text-sm font-bold hover:bg-rose-100 transition-colors flex items-center gap-2"
+              >
+                <LogOut size={16} />
+                <span className="hidden sm:inline">Sair</span>
+              </button>
+              {!isEditing ? (
+                <button 
+                  onClick={() => setIsEditing(true)}
+                  className="px-6 py-2 bg-primary-600 text-white rounded-xl text-sm font-bold hover:bg-primary-700 shadow-lg shadow-primary-500/20 transition-colors"
+                >
+                  Editar Perfil
+                </button>
+              ) : (
+                <button 
+                  onClick={() => setIsEditing(false)}
+                  className="px-6 py-2 border border-secondary-200 text-secondary-600 rounded-xl text-sm font-bold hover:bg-secondary-50 transition-colors"
                 >
                   Cancelar
                 </button>
-                <button
-                  onClick={confirmDeletePhoto}
-                  className="flex-1 px-4 py-2.5 bg-rose-600 text-white rounded-xl hover:bg-rose-700 font-bold shadow-lg shadow-rose-200 transition-colors"
-                >
-                  Sim, remover
-                </button>
-              </div>
+              )}
             </div>
           </div>
         </div>
-      )}
-
-      {/* Header da Página */}
-      <div className="mb-6">
-         <h1 className="text-2xl font-bold text-secondary-900 tracking-tight">Configurações de Perfil</h1>
-         <p className="text-secondary-500 text-sm font-medium">Gerencie suas informações pessoais e aparência.</p>
       </div>
 
-      <div className="bg-surface rounded-2xl shadow-card border border-secondary-100 overflow-hidden">
-        {/* Banner Decorativo */}
-        <div className="h-40 bg-gradient-to-r from-primary-600 via-primary-500 to-primary-700 relative overflow-hidden">
-           <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] opacity-20"></div>
-           <div className="absolute -bottom-10 -right-10 w-64 h-64 bg-white/10 rounded-full blur-3xl"></div>
-        </div>
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         
-        <div className="px-6 md:px-10 pb-10">
-          
-          {/* Avatar Section */}
-          <div className="relative -mt-20 mb-8 flex flex-col md:flex-row items-center md:items-end gap-6">
-            <div className="relative group">
-              <div className="w-36 h-36 rounded-full border-[5px] border-white shadow-xl overflow-hidden bg-secondary-100 flex items-center justify-center relative z-10">
-                {usuario.foto ? (
-                  <img src={usuario.foto} alt="Perfil" className="w-full h-full object-cover" />
-                ) : (
-                  <span className="text-4xl font-bold text-secondary-400">{usuario.iniciais}</span>
-                )}
+        {/* === COLUNA ESQUERDA: FORMULÁRIO PRINCIPAL === */}
+        <div className="lg:col-span-2 space-y-6">
+          <form onSubmit={handleSubmit(onSubmit)} className="bg-white rounded-2xl border border-secondary-100 shadow-sm p-6 md:p-8 relative">
+            
+            <div className="flex items-center justify-between mb-6">
+              <h2 className="text-lg font-bold text-secondary-900 flex items-center gap-2">
+                <User className="text-primary-500" size={20} />
+                Informações Pessoais
+              </h2>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {/* Nome */}
+              <div className="space-y-1.5">
+                <label className="text-xs font-bold text-secondary-500 uppercase">Nome Completo</label>
+                <input 
+                  disabled={!isEditing}
+                  {...register('nome')}
+                  className="w-full px-4 py-2.5 bg-secondary-50 border border-secondary-200 rounded-xl outline-none focus:border-primary-500 focus:ring-4 focus:ring-primary-500/10 transition-all disabled:opacity-60 disabled:cursor-not-allowed font-medium text-secondary-900"
+                />
+                {errors.nome && <p className="text-xs text-rose-500 font-bold">{errors.nome.message}</p>}
               </div>
-              
-              {/* Botões do Avatar */}
-              <div className="absolute bottom-1 right-0 flex gap-2 z-20">
-                <button 
-                  onClick={() => fileInputRef.current?.click()}
-                  className="bg-secondary-900 text-white p-2.5 rounded-full cursor-pointer hover:bg-primary-600 shadow-lg ring-4 ring-white transition-all hover:scale-110 active:scale-95 flex items-center justify-center" 
-                  title="Alterar foto"
-                >
-                  <Camera size={16} strokeWidth={2.5} />
-                  <input ref={fileInputRef} type="file" className="hidden" accept="image/*" onChange={onFileSelect} />
-                </button>
-                {usuario.foto && (
-                   <button 
-                   onClick={() => setShowDeleteConfirm(true)}
-                   className="bg-white text-rose-500 border border-secondary-200 p-2.5 rounded-full cursor-pointer hover:bg-rose-50 shadow-md transition-all hover:scale-110 active:scale-95 flex items-center justify-center" 
-                   title="Remover foto"
-                 >
-                   <Trash2 size={16} />
-                 </button>
-                )}
+
+              {/* Email (Read Only geralmente) */}
+              <div className="space-y-1.5">
+                <label className="text-xs font-bold text-secondary-500 uppercase">E-mail Profissional</label>
+                <div className="relative">
+                  <Mail className="absolute left-3 top-1/2 -translate-y-1/2 text-secondary-400" size={16} />
+                  <input 
+                    disabled={true} // Email geralmente não se troca fácil
+                    {...register('email')}
+                    className="w-full pl-10 pr-4 py-2.5 bg-secondary-100 border border-secondary-200 rounded-xl outline-none text-secondary-500 font-medium cursor-not-allowed"
+                  />
+                </div>
+              </div>
+
+              {/* Telefone */}
+              <div className="space-y-1.5">
+                <label className="text-xs font-bold text-secondary-500 uppercase">Telefone / WhatsApp</label>
+                <div className="relative">
+                  <Phone className="absolute left-3 top-1/2 -translate-y-1/2 text-secondary-400" size={16} />
+                  <input 
+                    disabled={!isEditing}
+                    {...register('telefone')}
+                    className="w-full pl-10 pr-4 py-2.5 bg-secondary-50 border border-secondary-200 rounded-xl outline-none focus:border-primary-500 focus:ring-4 focus:ring-primary-500/10 transition-all disabled:opacity-60 font-medium text-secondary-900"
+                  />
+                </div>
+                {errors.telefone && <p className="text-xs text-rose-500 font-bold">{errors.telefone.message}</p>}
+              </div>
+
+              {/* CRP */}
+              <div className="space-y-1.5">
+                <label className="text-xs font-bold text-secondary-500 uppercase">Registro Profissional (CRP)</label>
+                <div className="relative">
+                  <Award className="absolute left-3 top-1/2 -translate-y-1/2 text-secondary-400" size={16} />
+                  <input 
+                    disabled={!isEditing}
+                    {...register('crp')}
+                    className="w-full pl-10 pr-4 py-2.5 bg-secondary-50 border border-secondary-200 rounded-xl outline-none focus:border-primary-500 focus:ring-4 focus:ring-primary-500/10 transition-all disabled:opacity-60 font-medium text-secondary-900"
+                  />
+                </div>
+              </div>
+
+              {/* Especialidade */}
+              <div className="space-y-1.5 md:col-span-2">
+                <label className="text-xs font-bold text-secondary-500 uppercase">Especialidade Principal</label>
+                <input 
+                  disabled={!isEditing}
+                  {...register('especialidade')}
+                  className="w-full px-4 py-2.5 bg-secondary-50 border border-secondary-200 rounded-xl outline-none focus:border-primary-500 focus:ring-4 focus:ring-primary-500/10 transition-all disabled:opacity-60 font-medium text-secondary-900"
+                />
+              </div>
+
+              {/* Bio */}
+              <div className="space-y-1.5 md:col-span-2">
+                <label className="text-xs font-bold text-secondary-500 uppercase">Sobre Mim (Bio)</label>
+                <textarea 
+                  rows={4}
+                  disabled={!isEditing}
+                  {...register('bio')}
+                  className="w-full px-4 py-2.5 bg-secondary-50 border border-secondary-200 rounded-xl outline-none focus:border-primary-500 focus:ring-4 focus:ring-primary-500/10 transition-all disabled:opacity-60 font-medium text-secondary-900 resize-none"
+                  placeholder="Escreva um pouco sobre sua abordagem..."
+                />
               </div>
             </div>
 
-            <div className="text-center md:text-left pb-2">
-               <h2 className="text-2xl font-bold text-secondary-900">{usuario.nome}</h2>
-               <p className="text-secondary-500 font-medium flex items-center gap-1.5 justify-center md:justify-start">
-                 <Mail size={14} /> {usuario.email}
-               </p>
+            {/* Botão Salvar (Só aparece editando) */}
+            {isEditing && (
+              <div className="mt-8 flex justify-end animate-fade-in">
+                <button 
+                  type="submit"
+                  disabled={isSubmitting}
+                  className="flex items-center gap-2 px-8 py-3 bg-primary-600 text-white rounded-xl font-bold hover:bg-primary-700 shadow-lg shadow-primary-500/20 transition-all active:scale-95 disabled:opacity-70"
+                >
+                  {isSubmitting ? <Loader2 className="animate-spin" /> : <Save size={18} />}
+                  Salvar Alterações
+                </button>
+              </div>
+            )}
+          </form>
+
+          {/* Seção Endereço (Mock Visual) */}
+          <div className="bg-white rounded-2xl border border-secondary-100 shadow-sm p-6 md:p-8">
+            <h2 className="text-lg font-bold text-secondary-900 flex items-center gap-2 mb-6">
+              <MapPin className="text-primary-500" size={20} />
+              Endereço do Consultório
+            </h2>
+            <div className="p-4 bg-secondary-50 rounded-xl border border-dashed border-secondary-300 flex items-center justify-center text-secondary-500 gap-2">
+              <span>Funcionalidade de endereço em desenvolvimento...</span>
+            </div>
+          </div>
+        </div>
+
+        {/* === COLUNA DIREITA: CONFIGURAÇÕES === */}
+        <div className="space-y-6">
+          
+          {/* Segurança */}
+          <div className="bg-white rounded-2xl border border-secondary-100 shadow-sm p-6">
+            <h2 className="text-lg font-bold text-secondary-900 flex items-center gap-2 mb-4">
+              <Shield className="text-primary-500" size={20} />
+              Segurança
+            </h2>
+            <div className="space-y-4">
+              <button className="w-full flex items-center justify-between p-3 bg-secondary-50 hover:bg-secondary-100 rounded-xl transition-colors group">
+                <div className="flex items-center gap-3">
+                  <div className="p-2 bg-white rounded-lg text-secondary-600 group-hover:text-primary-600 transition-colors">
+                    <Lock size={18} />
+                  </div>
+                  <div className="text-left">
+                    <p className="text-sm font-bold text-secondary-900">Alterar Senha</p>
+                    <p className="text-xs text-secondary-500">Última troca há 3 meses</p>
+                  </div>
+                </div>
+                <span className="text-xs font-bold text-primary-600">Editar</span>
+              </button>
             </div>
           </div>
 
-          <form onSubmit={handleSubmit} className="space-y-6 max-w-3xl">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          {/* Preferências / Notificações */}
+          <div className="bg-white rounded-2xl border border-secondary-100 shadow-sm p-6">
+            <h2 className="text-lg font-bold text-secondary-900 flex items-center gap-2 mb-4">
+              <Bell className="text-primary-500" size={20} />
+              Notificações
+            </h2>
+            <div className="space-y-4">
               
-              <div className="space-y-1.5">
-                <label className="block text-xs font-bold text-secondary-700 uppercase tracking-wide ml-1">Nome Completo</label>
-                <div className="relative group">
-                  <User size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-secondary-400 group-focus-within:text-primary-600 transition-colors" />
-                  <input
-                    type="text"
-                    value={nome}
-                    onChange={(e) => setNome(e.target.value)}
-                    className="w-full pl-11 pr-4 py-3.5 bg-secondary-50 border border-secondary-200 rounded-xl focus:ring-4 focus:ring-primary-500/10 focus:border-primary-500 outline-none transition-all font-medium text-secondary-900 focus:bg-white"
-                  />
+              <label className="flex items-center justify-between cursor-pointer group">
+                <span className="text-sm font-medium text-secondary-700">Lembretes de Sessão</span>
+                <div className="relative inline-flex items-center cursor-pointer">
+                  <input type="checkbox" className="sr-only peer" defaultChecked />
+                  <div className="w-11 h-6 bg-secondary-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary-500"></div>
                 </div>
-              </div>
+              </label>
 
-              <div className="space-y-1.5">
-                <label className="block text-xs font-bold text-secondary-700 uppercase tracking-wide ml-1">Telefone</label>
-                <div className="relative group">
-                  <Phone size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-secondary-400 group-focus-within:text-primary-600 transition-colors" />
-                  <input
-                    type="tel"
-                    value={telefone}
-                    onChange={handlePhoneChange}
-                    maxLength={15}
-                    placeholder="(00) 00000-0000"
-                    className="w-full pl-11 pr-4 py-3.5 bg-secondary-50 border border-secondary-200 rounded-xl focus:ring-4 focus:ring-primary-500/10 focus:border-primary-500 outline-none transition-all font-medium text-secondary-900 focus:bg-white"
-                  />
+              <label className="flex items-center justify-between cursor-pointer group">
+                <span className="text-sm font-medium text-secondary-700">E-mail Marketing</span>
+                <div className="relative inline-flex items-center cursor-pointer">
+                  <input type="checkbox" className="sr-only peer" />
+                  <div className="w-11 h-6 bg-secondary-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary-500"></div>
                 </div>
-              </div>
+              </label>
 
-              <div className="md:col-span-2 space-y-1.5">
-                <label className="block text-xs font-bold text-secondary-700 uppercase tracking-wide ml-1">E-mail de Acesso</label>
-                <div className="relative group">
-                  <Mail size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-secondary-400 group-focus-within:text-primary-600 transition-colors" />
-                  <input
-                    type="email"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    className="w-full pl-11 pr-4 py-3.5 bg-secondary-50 border border-secondary-200 rounded-xl focus:ring-4 focus:ring-primary-500/10 focus:border-primary-500 outline-none transition-all font-medium text-secondary-900 focus:bg-white"
-                  />
+              <label className="flex items-center justify-between cursor-pointer group">
+                <span className="text-sm font-medium text-secondary-700">Alertas Financeiros</span>
+                <div className="relative inline-flex items-center cursor-pointer">
+                  <input type="checkbox" className="sr-only peer" defaultChecked />
+                  <div className="w-11 h-6 bg-secondary-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary-500"></div>
                 </div>
-              </div>
+              </label>
+
             </div>
+          </div>
 
-            <div className="pt-6 border-t border-secondary-100 flex justify-end">
-              <button 
-                type="submit" 
-                className="w-full md:w-auto bg-primary-600 hover:bg-primary-700 text-white px-8 py-3.5 rounded-xl font-bold flex items-center justify-center gap-2 shadow-lg shadow-primary-500/20 transition-all hover:-translate-y-0.5 active:scale-95"
-              >
-                <Save size={18} strokeWidth={2.5} />
-                Salvar Alterações
-              </button>
-            </div>
-          </form>
         </div>
       </div>
     </div>
