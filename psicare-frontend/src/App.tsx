@@ -11,6 +11,7 @@ import { MainLayout } from './components/layout/MainLayout';
 // Pages - Públicas
 import Login from './pages/Login';
 import Cadastro from './pages/Cadastro';
+import RecuperarSenha from './pages/RecuperarSenha'; // <--- Importação adicionada
 import { Termos } from './pages/Termos';
 import { Privacidade } from './pages/Privacidade';
 
@@ -32,8 +33,8 @@ export default function App() {
                   {/* === Rotas Públicas === */}
                   <Route path="/login" element={<Login />} />
                   <Route path="/cadastro" element={<Cadastro />} />
+                  <Route path="/recuperar-senha" element={<RecuperarSenha />} /> {/* <--- Rota adicionada */}
                   
-                  {/* Adicionado aqui para corrigir o erro */}
                   <Route path="/termos" element={<Termos />} />
                   <Route path="/privacidade" element={<Privacidade />} />
 
@@ -45,7 +46,7 @@ export default function App() {
                     <Route path="perfil" element={<Perfil />} />
                   </Route>
 
-                  {/* Fallback para rotas desconhecidas (opcional, redireciona para login ou home) */}
+                  {/* Fallback para rotas desconhecidas */}
                   <Route path="*" element={<Navigate to="/" replace />} />
                 </Routes>
               </NotificacoesProvider>
