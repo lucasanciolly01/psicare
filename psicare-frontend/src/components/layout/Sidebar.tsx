@@ -5,7 +5,6 @@ import {
   Users,
   LogOut,
   Settings,
-  DollarSign, // <--- Importado
 } from "lucide-react";
 import { NavLink } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
@@ -22,7 +21,6 @@ export function Sidebar({ mobile, onClose }: SidebarProps) {
     { icon: LayoutDashboard, label: "Início", path: "/" },
     { icon: Calendar, label: "Agenda", path: "/agenda" },
     { icon: Users, label: "Pacientes", path: "/pacientes" },
-    { icon: DollarSign, label: "Financeiro", path: "/financeiro" }, // <--- Novo Item
   ];
 
   const handleLinkClick = () => {
@@ -37,6 +35,7 @@ export function Sidebar({ mobile, onClose }: SidebarProps) {
       <div className="p-6 md:p-8 flex-shrink-0">
         <div className="flex items-center gap-3">
           <div className="w-10 h-10 bg-primary-50 rounded-xl flex items-center justify-center text-primary-600 shadow-sm">
+            {/* Logo Icon Simulado com Lucide ou SVG se tivesse */}
             <svg
               className="w-6 h-6"
               viewBox="0 0 24 24"

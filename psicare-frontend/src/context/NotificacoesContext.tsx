@@ -1,12 +1,13 @@
+// src/context/NotificacoesContext.tsx
 import { createContext, useContext, useState, useEffect, useCallback, type ReactNode } from 'react';
 import { usePacientes } from './PacientesContext';
 import { useAgendamentos } from './AgendamentosContext';
 import { type Notificacao } from '../types';
-import { isToday, parseISO, differenceInMinutes, format } from 'date-fns';
+import { isToday, parseISO, differenceInMinutes } from 'date-fns';
 
 interface NotificacoesContextData {
   notificacoes: Notificacao[];
-  naoLidasCount: number;
+  naoLidasCount: number; // Correção: Garante que é number
   marcarComoLida: (id: string) => void;
   marcarTodasComoLidas: () => void;
   removerNotificacao: (id: string) => void;
@@ -21,6 +22,7 @@ export function NotificacoesProvider({ children }: { children: ReactNode }) {
   const { pacientes } = usePacientes();
   const { agendamentos } = useAgendamentos();
 
+  // Função memorizada para evitar loops nos useEffects
   const adicionarNotificacaoManual = useCallback((dados: Omit<Notificacao, 'id' | 'data' | 'lida'>) => {
     setNotificacoes(current => [
       {
@@ -36,12 +38,14 @@ export function NotificacoesProvider({ children }: { children: ReactNode }) {
   // 1. Gerar Notificações de Aniversário
   useEffect(() => {
     const hoje = new Date();
+    // Filtra aniversariantes do dia (Mês e Dia iguais)
     const aniversariantes = pacientes.filter(p => {
       if (!p.dataNascimento) return false;
+      // Garante parsing seguro da data (tratando string YYYY-MM-DD)
       const partes = p.dataNascimento.split('-');
       if (partes.length !== 3) return false;
       
-      const mesNasc = parseInt(partes[1], 10) - 1; 
+      const mesNasc = parseInt(partes[1], 10) - 1; // Mês em JS começa em 0
       const diaNasc = parseInt(partes[2], 10);
       
       return diaNasc === hoje.getDate() && mesNasc === hoje.getMonth();
@@ -64,25 +68,27 @@ export function NotificacoesProvider({ children }: { children: ReactNode }) {
     });
   }, [pacientes, notificacoes, adicionarNotificacaoManual]);
 
-  // 2. Gerar Notificações de Sessões Próximas
+  // 2. Gerar Notificações de Sessões Próximas (Ex: faltam 60 min)
   useEffect(() => {
     const agora = new Date();
     
     agendamentos.forEach(a => {
-      // Adaptação para o tipo CalendarEvent que usa 'start' em vez de data/horario separados
-      const dataSessao = typeof a.start === 'string' ? parseISO(a.start) : a.start;
+      if (a.status !== 'agendado') return;
+      
+      const dataSessao = parseISO(`${a.data}T${a.hora}`);
       const diffMinutos = differenceInMinutes(dataSessao, agora);
 
+      // Notifica se faltar entre 0 e 60 minutos
       if (diffMinutos > 0 && diffMinutos <= 60) {
-        const horario = format(dataSessao, 'HH:mm');
+        // Evita duplicatas checando se já existe notificação hoje para este horário
         const jaExiste = notificacoes.some(n => 
-          n.tipo === 'agendamento' && n.mensagem.includes(horario) && isToday(parseISO(n.data))
+          n.tipo === 'agendamento' && n.mensagem.includes(a.hora) && isToday(parseISO(n.data))
         );
 
         if (!jaExiste) {
           adicionarNotificacaoManual({
             titulo: '⏰ Sessão em Breve',
-            mensagem: `Sessão com ${a.pacienteNome} começa às ${horario}.`,
+            mensagem: `Sessão com ${a.pacienteNome} começa às ${a.hora}.`,
             tipo: 'agendamento',
             link: '/agenda'
           });
@@ -123,7 +129,6 @@ export function NotificacoesProvider({ children }: { children: ReactNode }) {
   );
 }
 
-// Adicionado comentário para silenciar o aviso do ESLint sobre Fast Refresh
 // eslint-disable-next-line react-refresh/only-export-components
 export function useNotificacoes() {
   return useContext(NotificacoesContext);

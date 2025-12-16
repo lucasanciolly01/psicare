@@ -2,7 +2,6 @@ import { Modal } from "../ui/Modal";
 import { sessaoService } from "../../services/sessaoService";
 import { type Paciente, type StatusSessao, type Sessao } from "../../types";
 import { useToast } from "../../context/ToastContext";
-import { AxiosError } from "axios"; // <--- Importação Adicionada
 import {
   Phone,
   Mail,
@@ -16,7 +15,7 @@ import {
   XCircle,
   ArrowRight,
   User,
-  Loader2,
+  Loader2, // <--- Adicionado aqui
 } from "lucide-react";
 import { useState, useEffect, useCallback, type ElementType } from "react";
 import { format, parseISO } from "date-fns";
@@ -26,17 +25,6 @@ interface PatientDetailsProps {
   isOpen: boolean;
   onClose: () => void;
   paciente: Paciente | null;
-}
-
-// Interface para mapear o erro de validação que vem do Java (TratadorDeErros)
-interface BackendValidationError {
-  campo: string;
-  mensagem: string;
-}
-
-// Interface para mensagens de erro simples (ex: regras de negócio genéricas)
-interface BackendMessageError {
-  message: string;
 }
 
 const InfoSection = ({
@@ -190,37 +178,13 @@ export function PatientDetailsModal({
           title: "Sucesso",
           description: "Evolução registrada.",
         });
-    } catch (error) { // Removido o ': any'
-      console.error("Erro ao salvar sessão:", error);
-      
-      let mensagemErro = "Não foi possível salvar a sessão.";
-      
-      // Tipagem segura usando AxiosError
-      const err = error as AxiosError<BackendValidationError[] | BackendMessageError>;
-
-      // Lógica para extrair mensagens do TratadorDeErros (Java)
-      if (err.response?.data) {
-        const dadosErro = err.response.data;
-        
-        // Caso 1: Array de erros de validação (ex: @NotNull, @NotBlank)
-        if (Array.isArray(dadosErro)) {
-          // Formata: "Campo: erro" (ex: "data: não deve ser nulo")
-          const detalhes = dadosErro
-            .map(e => `${e.campo}: ${e.mensagem}`)
-            .join(' | ');
-          mensagemErro = `Verifique os campos: ${detalhes}`;
-        } 
-        // Caso 2: Erro genérico com mensagem simples
-        else if ('message' in dadosErro) {
-          mensagemErro = dadosErro.message;
-        }
-      }
-
+    } catch (error) {
+      console.error(error);
       if (addToast)
         addToast({
           type: "error",
-          title: "Erro de Validação",
-          description: mensagemErro,
+          title: "Erro",
+          description: "Não foi possível salvar.",
         });
     }
   };

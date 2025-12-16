@@ -1,14 +1,15 @@
-// Define o item esperado para verificação
+// Definição compatível com a interface do Contexto
 export interface AgendamentoItem {
   data: string;
-  horario: string; // <--- PADRONIZADO
+  hora: string;
   status?: string; 
+  // REMOVIDO: [key: string]: unknown; -> Isso causava o erro de build
 }
 
 export const verificarConflito = (
   agendamentos: AgendamentoItem[], 
   data: string, 
-  horaNova: string // Recebe string HH:mm
+  horaNova: string
 ): boolean => {
   // Converte a hora nova para minutos
   const [hNova, mNova] = horaNova.split(':').map(Number);
@@ -20,8 +21,7 @@ export const verificarConflito = (
   );
 
   for (const agendamento of agendamentosDoDia) {
-    // CORREÇÃO: Usa .horario
-    const [hExistente, mExistente] = agendamento.horario.split(':').map(Number);
+    const [hExistente, mExistente] = agendamento.hora.split(':').map(Number);
     const minutosExistente = hExistente * 60 + mExistente;
 
     // Calcula a diferença absoluta

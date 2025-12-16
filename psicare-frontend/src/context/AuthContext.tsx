@@ -3,14 +3,12 @@ import { useNavigate } from 'react-router-dom';
 import { type Usuario } from '../types';
 import { api } from '../services/api';
 import { useToast } from './ToastContext';
-import { AxiosError } from 'axios';
 
 interface AuthContextData {
   usuario: Usuario | null;
   login: (email: string, senha: string) => Promise<void>;
   logout: () => void;
-  // ATUALIZADO: Aceita senha e retorna Promise
-  atualizarPerfil: (dados: Partial<Usuario> & { senha?: string }) => Promise<void>;
+  atualizarPerfil: (dados: Partial<Usuario>) => void;
   salvarFotoCortada: (base64Image: string) => void;
   removerFoto: () => void;
   loading: boolean;
@@ -22,6 +20,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const navigate = useNavigate();
   const { addToast } = useToast();
   
+  // CORREÇÃO 1: Inicia como false, pois o localStorage é síncrono.
   const [loading, setLoading] = useState(false);
 
   const [usuario, setUsuario] = useState<Usuario | null>(() => {
@@ -33,6 +32,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (usuario) {
       localStorage.setItem('psicare_auth_v2', JSON.stringify(usuario));
       
+      // CORREÇÃO 2: Tipagem segura (cast) para garantir que o token seja lido
       const usuarioComToken = usuario as Usuario & { token?: string };
       
       if (usuarioComToken.token) {
@@ -42,11 +42,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       localStorage.removeItem('psicare_auth_v2');
       delete api.defaults.headers.common['Authorization'];
     }
+    // CORREÇÃO 3: Removido setLoading(false) daqui para evitar o erro 'set-state-in-effect'
   }, [usuario]);
 
   const login = async (email: string, senha: string) => {
     try {
       setLoading(true);
+      // Chama o Backend Java
       const response = await api.post('/login', { email, senha });
 
       const { token, id, nome, iniciais, telefone } = response.data;
@@ -64,12 +66,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setUsuario(usuarioLogado);
       addToast({ type: 'success', title: 'Login realizado com sucesso!' });
       
+      // Pequeno delay para garantir que o state atualizou antes de trocar de página
       setTimeout(() => navigate('/dashboard'), 100);
 
     } catch (error) {
       console.error('Erro ao realizar login:', error);
       
-      const err = error as AxiosError;
+      // CORREÇÃO 4: Tratamento de erro seguro sem 'any'
+      const err = error as { response?: { status: number } };
       
       if (err.response?.status === 403 || err.response?.status === 401) {
         addToast({ type: 'error', title: 'E-mail ou senha incorretos.' });
@@ -89,36 +93,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     addToast({ type: 'info', title: 'Você saiu do sistema.' });
   };
 
-  // ATUALIZADO: Conectado ao Backend
-  const atualizarPerfil = async (dados: Partial<Usuario> & { senha?: string }) => {
+  const atualizarPerfil = (dados: Partial<Usuario>) => {
     if (!usuario) return;
 
-    try {
-      setLoading(true);
-      
-      // Chama o Backend
-      const response = await api.put('/usuarios', {
-        nome: dados.nome,
-        telefone: dados.telefone,
-        senha: dados.senha // Opcional
-      });
-      
-      // O Backend devolve o usuário atualizado
-      const usuarioAtualizado = response.data;
-
-      // Atualiza o estado local mantendo o token e outros campos não retornados
-      setUsuario(prev => 
-        prev ? { ...prev, ...usuarioAtualizado, token: prev.token } : null
-      );
-
-      addToast({ type: 'success', title: 'Perfil atualizado com sucesso!' });
-      
-    } catch (error) {
-      console.error("Erro ao atualizar perfil:", error);
-      addToast({ type: 'error', title: 'Erro ao atualizar dados.' });
-    } finally {
-      setLoading(false);
+    let novasIniciais = usuario.iniciais;
+    if (dados.nome) {
+      novasIniciais = dados.nome.substring(0, 2).toUpperCase();
     }
+
+    setUsuario(prev =>
+      prev ? { ...prev, ...dados, iniciais: novasIniciais } : null
+    );
+    addToast({ type: 'success', title: 'Perfil atualizado!' });
   };
 
   const salvarFotoCortada = (base64Image: string) => {

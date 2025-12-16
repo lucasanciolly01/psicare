@@ -62,14 +62,3 @@ export interface DashboardData {
   pacientesInativos: number;
   sessoesMesAtual: number;
 }
-
-export interface Agendamento {
-  id: string;
-  pacienteId: string;
-  pacienteNome: string;
-  data: string;     // YYYY-MM-DD
-  horario: string;  // HH:mm (Esta é a propriedade que faltava!)
-  tipo: string;     // 'Primeira Consulta', 'Sessão', etc.
-  status: 'agendado' | 'concluido' | 'cancelado';
-  observacoes?: string;
-}
