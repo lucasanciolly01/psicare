@@ -2,7 +2,7 @@ import { createContext, useContext, useState, useEffect, useCallback, type React
 import { usePacientes } from './PacientesContext';
 import { useAgendamentos } from './AgendamentosContext';
 import { type Notificacao } from '../types';
-import { isToday, parseISO, differenceInMinutes } from 'date-fns';
+import { isToday, parseISO, differenceInMinutes, format } from 'date-fns';
 
 interface NotificacoesContextData {
   notificacoes: Notificacao[];
@@ -69,21 +69,20 @@ export function NotificacoesProvider({ children }: { children: ReactNode }) {
     const agora = new Date();
     
     agendamentos.forEach(a => {
-      if (a.status !== 'agendado') return;
-      
-      // Uso correto de .horario conforme padronização
-      const dataSessao = parseISO(`${a.data}T${a.horario}`);
+      // Adaptação para o tipo CalendarEvent que usa 'start' em vez de data/horario separados
+      const dataSessao = typeof a.start === 'string' ? parseISO(a.start) : a.start;
       const diffMinutos = differenceInMinutes(dataSessao, agora);
 
       if (diffMinutos > 0 && diffMinutos <= 60) {
+        const horario = format(dataSessao, 'HH:mm');
         const jaExiste = notificacoes.some(n => 
-          n.tipo === 'agendamento' && n.mensagem.includes(a.horario) && isToday(parseISO(n.data))
+          n.tipo === 'agendamento' && n.mensagem.includes(horario) && isToday(parseISO(n.data))
         );
 
         if (!jaExiste) {
           adicionarNotificacaoManual({
             titulo: '⏰ Sessão em Breve',
-            mensagem: `Sessão com ${a.pacienteNome} começa às ${a.horario}.`,
+            mensagem: `Sessão com ${a.pacienteNome} começa às ${horario}.`,
             tipo: 'agendamento',
             link: '/agenda'
           });

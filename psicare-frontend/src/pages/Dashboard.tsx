@@ -3,37 +3,76 @@ import {
   Calendar,
   Users,
   TrendingUp,
-  Clock,
+  Clock, // Import mantido e agora utilizado
   ArrowRight,
   Plus,
   MoreHorizontal,
   CheckCircle2,
   AlertCircle,
+  Loader2,
 } from "lucide-react";
 import { useAuth } from "../context/AuthContext";
-import { useAgendamentos } from "../context/AgendamentosContext";
-import { usePacientes } from "../context/PacientesContext";
 import { useNotificacoes } from "../context/NotificacoesContext";
+import { useEffect, useState } from "react";
+import { api } from "../services/api";
+import { type Sessao } from "../types";
+
+// Extensão do tipo Sessao para incluir campos específicos do Dashboard (como nome do paciente)
+interface SessaoDashboard extends Sessao {
+  pacienteNome: string;
+}
+
+interface DashboardData {
+  totalPacientes: number;
+  pacientesAtivos: number;
+  pacientesInativos: number;
+  sessoesMesAtual: number;
+  agendamentosHoje: SessaoDashboard[];
+}
 
 export function Dashboard() {
   const { usuario } = useAuth();
-  const { agendamentos } = useAgendamentos();
-  const { pacientes } = usePacientes();
   const { notificacoes } = useNotificacoes();
+  
+  const [data, setData] = useState<DashboardData | null>(null);
+  const [loading, setLoading] = useState(true);
 
-  // Dados calculados (Simulação de lógica real)
+  useEffect(() => {
+    async function fetchDashboard() {
+      try {
+        const response = await api.get("/dashboard/resumo");
+        setData(response.data);
+      } catch (error) {
+        console.error("Erro ao carregar dashboard:", error);
+      } finally {
+        setLoading(false);
+      }
+    }
+    fetchDashboard();
+  }, []);
+
   const hoje = new Date().toLocaleDateString("pt-BR", {
     weekday: "long",
     day: "numeric",
     month: "long",
   });
-  const agendamentosHoje = agendamentos
-    .filter((a) => a.data === new Date().toISOString().split("T")[0])
-    .slice(0, 3);
-  const pacientesAtivos = pacientes.length;
 
-  // Mock Financeiro Rápido (poderia vir de um contexto global no futuro)
-  const faturamentoMes = 8450.0;
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-[calc(100vh-200px)]">
+        <Loader2 className="animate-spin text-primary-600" size={40} />
+      </div>
+    );
+  }
+
+  // Fallback seguro caso a API falhe
+  const dashboard = data || {
+    totalPacientes: 0,
+    pacientesAtivos: 0,
+    pacientesInativos: 0,
+    sessoesMesAtual: 0,
+    agendamentosHoje: [],
+  };
 
   return (
     <div className="space-y-8 animate-fade-in">
@@ -56,7 +95,7 @@ export function Dashboard() {
           <p className="text-secondary-200 mt-2 max-w-md text-sm md:text-base leading-relaxed">
             Você tem{" "}
             <strong className="text-white">
-              {agendamentosHoje.length} atendimentos
+              {dashboard.agendamentosHoje.length} atendimentos
             </strong>{" "}
             programados para hoje. Mantenha o foco e um ótimo trabalho!
           </p>
@@ -105,55 +144,61 @@ export function Dashboard() {
             </div>
 
             <div className="space-y-3">
-              {agendamentosHoje.length > 0 ? (
-                agendamentosHoje.map((agendamento) => (
-                  <div
-                    key={agendamento.id}
-                    className="flex items-center p-4 bg-secondary-50 hover:bg-white border border-transparent hover:border-secondary-200 rounded-xl transition-all group"
-                  >
-                    {/* Horário */}
-                    <div className="flex flex-col items-center justify-center w-14 h-14 bg-white border border-secondary-200 rounded-xl mr-4 shadow-sm group-hover:border-primary-200 group-hover:shadow-primary-500/10">
-                      <span className="text-xs font-bold text-secondary-500">
-                        {/* Agora o TypeScript vai reconhecer isso: */}
-                        {agendamento.horario.split(":")[0]}h
-                      </span>
-                      <span className="text-xs font-bold text-secondary-400">
-                        {agendamento.horario.split(":")[1]}
-                      </span>
-                    </div>
-                    {/* Info */}
-                    <div className="flex-1">
-                      <h3 className="font-bold text-secondary-900 text-sm md:text-base">
-                        {agendamento.pacienteNome}
-                      </h3>
-                      <p className="text-xs text-secondary-500 flex items-center gap-1.5 mt-0.5">
-                        <span
-                          className={`w-1.5 h-1.5 rounded-full ${
-                            agendamento.tipo === "Primeira Consulta"
-                              ? "bg-purple-500"
-                              : "bg-primary-500"
-                          }`}
-                        />
-                        {agendamento.tipo}
-                      </p>
-                    </div>
-                    {/* Status / Ação */}
-                    <div className="flex items-center gap-2">
-                      {agendamento.status === "agendado" ? (
-                        <span className="px-3 py-1 bg-blue-50 text-blue-700 text-xs font-bold rounded-lg border border-blue-100">
-                          Confirmado
+              {dashboard.agendamentosHoje.length > 0 ? (
+                dashboard.agendamentosHoje.map((agendamento) => {
+                  // Extração segura do horário a partir da data ISO
+                  const dataObj = new Date(agendamento.data);
+                  const hora = dataObj.getHours().toString().padStart(2, '0');
+                  const minuto = dataObj.getMinutes().toString().padStart(2, '0');
+
+                  return (
+                    <div
+                      key={agendamento.id}
+                      className="flex items-center p-4 bg-secondary-50 hover:bg-white border border-transparent hover:border-secondary-200 rounded-xl transition-all group"
+                    >
+                      {/* Visual de Horário */}
+                      <div className="flex flex-col items-center justify-center w-14 h-14 bg-white border border-secondary-200 rounded-xl mr-4 shadow-sm group-hover:border-primary-200 group-hover:shadow-primary-500/10">
+                        <span className="text-xs font-bold text-secondary-500">
+                          {hora}h
                         </span>
-                      ) : (
-                        <span className="px-3 py-1 bg-emerald-50 text-emerald-700 text-xs font-bold rounded-lg border border-emerald-100">
-                          Concluído
+                        <span className="text-xs font-bold text-secondary-400">
+                          {minuto}
                         </span>
-                      )}
-                      <button className="p-2 text-secondary-400 hover:text-primary-600 hover:bg-primary-50 rounded-lg transition-colors">
-                        <MoreHorizontal size={18} />
-                      </button>
+                      </div>
+                      
+                      {/* Info */}
+                      <div className="flex-1">
+                        <h3 className="font-bold text-secondary-900 text-sm md:text-base">
+                          {agendamento.pacienteNome || "Paciente"}
+                        </h3>
+                        <p className="text-xs text-secondary-500 flex items-center gap-1.5 mt-0.5">
+                          <span
+                            className={`w-1.5 h-1.5 rounded-full ${
+                              agendamento.tipo === "Primeira Consulta" || agendamento.tipo === "Anamnese Inicial"
+                                ? "bg-purple-500"
+                                : "bg-primary-500"
+                            }`}
+                          />
+                          {agendamento.tipo || "Sessão"}
+                        </p>
+                      </div>
+                      
+                      {/* Status */}
+                      <div className="flex items-center gap-2">
+                         <span className={`px-3 py-1 text-xs font-bold rounded-lg border uppercase ${
+                            agendamento.statusSessao === 'COMPARECEU' 
+                              ? 'bg-emerald-50 text-emerald-700 border-emerald-100'
+                              : 'bg-blue-50 text-blue-700 border-blue-100'
+                         }`}>
+                          {agendamento.statusSessao === 'COMPARECEU' ? 'Concluído' : 'Agendado'}
+                        </span>
+                        <button className="p-2 text-secondary-400 hover:text-primary-600 hover:bg-primary-50 rounded-lg transition-colors">
+                          <MoreHorizontal size={18} />
+                        </button>
+                      </div>
                     </div>
-                  </div>
-                ))
+                  );
+                })
               ) : (
                 <div className="text-center py-10 bg-secondary-50/50 rounded-xl border border-dashed border-secondary-200">
                   <div className="w-12 h-12 bg-secondary-100 rounded-full flex items-center justify-center mx-auto mb-3 text-secondary-400">
@@ -230,15 +275,15 @@ export function Dashboard() {
                 <Users size={24} />
               </div>
               <span className="px-2.5 py-1 bg-emerald-50 text-emerald-700 text-xs font-bold rounded-lg border border-emerald-100 flex items-center gap-1">
-                <TrendingUp size={12} /> +4%
+                <TrendingUp size={12} /> Ativos
               </span>
             </div>
             <div className="relative z-10">
               <h3 className="text-3xl font-bold text-secondary-900">
-                {pacientesAtivos}
+                {dashboard.pacientesAtivos}
               </h3>
               <p className="text-sm text-secondary-500 font-medium">
-                Pacientes Ativos
+                Total: {dashboard.totalPacientes} cadastrados
               </p>
             </div>
             {/* Decoração Fundo */}
@@ -248,7 +293,7 @@ export function Dashboard() {
             />
           </div>
 
-          {/* Card Financeiro */}
+          {/* Card Sessões (Substituindo Faturamento Fake) */}
           <div className="bg-secondary-900 p-5 rounded-2xl shadow-lg shadow-secondary-900/10 text-white relative overflow-hidden">
             <div className="flex justify-between items-start mb-4 relative z-10">
               <div className="p-3 bg-white/10 backdrop-blur-md rounded-xl">
@@ -257,20 +302,14 @@ export function Dashboard() {
             </div>
             <div className="relative z-10">
               <p className="text-secondary-300 text-xs font-bold uppercase tracking-wider mb-1">
-                Faturamento (Mês)
+                Sessões (Mês Atual)
               </p>
               <h3 className="text-3xl font-bold">
-                R${" "}
-                {faturamentoMes.toLocaleString("pt-BR", {
-                  minimumFractionDigits: 2,
-                })}
+                {dashboard.sessoesMesAtual}
               </h3>
-              <Link
-                to="/financeiro"
-                className="text-xs text-primary-300 hover:text-white mt-3 inline-flex items-center gap-1 transition-colors"
-              >
-                Ver detalhes <ArrowRight size={12} />
-              </Link>
+              <p className="text-xs text-secondary-400 mt-1">
+                Atendimentos realizados
+              </p>
             </div>
             {/* Decoração Fundo */}
             <div className="absolute top-0 right-0 w-32 h-32 bg-emerald-500/20 rounded-full blur-2xl -translate-y-1/2 translate-x-1/2"></div>
@@ -283,15 +322,11 @@ export function Dashboard() {
               <span>Atenção</span>
             </div>
             <p className="text-sm text-orange-700 leading-relaxed mb-3">
-              Você tem <strong>2 prontuários</strong> pendentes de preenchimento
-              da semana passada.
+              Mantenha os prontuários atualizados após cada sessão para garantir um histórico completo.
             </p>
-            <button className="w-full py-2 bg-white border border-orange-200 text-orange-700 text-xs font-bold rounded-lg hover:bg-orange-100 transition-colors">
-              Resolver Pendências
-            </button>
           </div>
 
-          {/* Card Informativo / Quote */}
+          {/* Card Informativo / Quote - CLOCK UTILIZADO AQUI */}
           <div className="bg-gradient-to-br from-primary-600 to-primary-700 p-6 rounded-2xl shadow-lg text-white text-center">
             <Clock size={32} className="mx-auto mb-3 opacity-80" />
             <p className="text-sm font-medium opacity-90 italic">

@@ -28,6 +28,7 @@ export function ImageCropperModal({ imageSrc, onCancel, onSave }: ImageCropperMo
       onSave(croppedImageBase64); 
     } catch (e) {
       console.error(e);
+      // Sugestão: Usar o Toast aqui seria melhor, mas mantive o alert simples para não acoplar
       alert('Erro ao processar imagem.');
     } finally {
       setIsLoading(false);

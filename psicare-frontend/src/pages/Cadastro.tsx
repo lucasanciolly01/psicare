@@ -5,6 +5,8 @@ import { useToast } from "../context/ToastContext";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { api } from "../services/api"; // <--- Importação da API
+import { AxiosError } from "axios";     // <--- Importação para tipagem de erros
 import {
   User,
   Mail,
@@ -49,20 +51,44 @@ export default function Cadastro() {
 
   const handleCadastro = async (data: CadastroSchema) => {
     try {
-      await new Promise((resolve) => setTimeout(resolve, 1000));
-      login(data.email, data.senha);
+      // 1. Criação do Usuário no Backend
+      await api.post("/usuarios", {
+        nome: data.nome,
+        email: data.email,
+        senha: data.senha,
+        telefone: null, // Backend aceita null (opcional)
+      });
+
       addToast({
         type: "success",
         title: "Conta criada com sucesso!",
-        description: "Bem-vindo(a) ao PsiCare.",
+        description: "Realizando login automático...",
       });
-      navigate("/");
+
+      // 2. Login Automático
+      await login(data.email, data.senha);
+      
+      // Redireciona para o Dashboard (garantia extra, caso o login não redirecione a tempo)
+      navigate("/dashboard");
+
     } catch (error) {
       console.error(error);
+      
+      const err = error as AxiosError<{ message?: string }>;
+      let msg = "Tente novamente mais tarde.";
+
+      // Tratamento específico para erros conhecidos
+      if (err.response?.data?.message) {
+         msg = err.response.data.message;
+      } else if (err.response?.status === 500) {
+         // Fallback para erros de constraint (ex: email duplicado) caso o backend lance exceção genérica
+         msg = "Erro interno. Verifique se o e-mail já está cadastrado.";
+      }
+
       addToast({
         type: "error",
         title: "Erro ao criar conta",
-        description: "Tente novamente mais tarde.",
+        description: msg,
       });
     }
   };
@@ -70,7 +96,6 @@ export default function Cadastro() {
   return (
     <div className="flex min-h-screen w-full bg-surface font-sans text-secondary-900">
       {/* === COLUNA ESQUERDA (IMAGEM/BRANDING) === */}
-      {/* CORREÇÃO: Removido 'relative', mantido apenas 'sticky' */}
       <div className="hidden lg:flex lg:w-1/2 xl:w-[55%] sticky top-0 h-screen items-center justify-center overflow-hidden bg-secondary-900">
         <div className="absolute inset-0 bg-gradient-to-br from-primary-900 to-secondary-950 opacity-90 z-10" />
         <div className="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1633613286991-611fe299c4be?q=80&w=2070&auto=format&fit=crop')] bg-cover bg-center mix-blend-overlay opacity-30 animate-scale-in duration-[3s]" />
